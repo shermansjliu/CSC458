@@ -409,17 +409,16 @@ void sr_handlepacket(struct sr_instance *sr,
     return;
   }
 
-  uint16_t packet_type = ethertype(packet);
 
   /* ip packet */
-  if (packet_type == ethertype_ip)
+  if (ethertype(packet) == ethertype_ip)
   {
     printf("This is an IP Packet \n");
     sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
     print_hdr_ip(packet + sizeof(sr_ethernet_hdr_t));
     handle_ip_packet(sr, ip_header, packet, len, interface);
   }
-  else if (packet_type == ethertype_arp)
+  else if (ethertype(packet) == ethertype_arp)
   {
     sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *)(packet + sizeof(sr_arp_hdr_t));
 
