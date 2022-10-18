@@ -353,7 +353,6 @@ void construct_type_3_11_icmp_hdr(sr_icmp_t3_hdr_t *new_icmp_hdr, uint8_t icmp_c
   new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
 }
 
-
 void construct_echo_icmp_hdr(sr_icmp_hdr_t *new_icmp_hdr, uint8_t icmp_code, uint8_t icmp_type, uint8_t packet_length)
 {
   new_icmp_hdr->icmp_code = icmp_code;
@@ -431,7 +430,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     /* swap src and dst */
     new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
     new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
-    
+
     /* repeat check sum because we change the hdr*/
     new_ip_hdr->ip_sum = 0;
     new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
@@ -477,18 +476,34 @@ void sr_handlepacket(struct sr_instance *sr,
     sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *)(packet + sizeof(sr_arp_hdr_t));
 
     /* TODO add a check for this if the target IP address is one of your router’s IP addresses.*/
-    if (ntohs(arp_header->ar_op)== arp_op_reply)
-    {
-      printf("Processing arp reply\n");
-      handle_arp_reply(sr, packet);
-    }
 
-    else if (ntohs(arp_header->ar_op) == arp_op_request)
+    int is_target_ip_one_of_routers_ip = 0;
+    struct sr_if *if_curr = sr->if_list;
+    while (if_curr)
     {
-      printf("Proessing arp request\n");
-      struct sr_if *sr_interface = sr_get_interface(sr, interface);
-      handle_arp_request(sr, len, arp_header, sr_interface, packet);
+      if (arp_header->ar_tip == if_curr->ip)
+      {
+        is_target_ip_one_of_routers_ip = 1;
+        break;
+      }
     }
+    
+    if (is_target_ip_one_of_routers_ip)
+    {
+      if (ntohs(arp_header->ar_op) == arp_op_reply)
+      {
+        printf("Processing arp reply\n");
+        handle_arp_reply(sr, packet);
+      }
+
+      else if (ntohs(arp_header->ar_op) == arp_op_request)
+      {
+        printf("Proessing arp request\n");
+        struct sr_if *sr_interface = sr_get_interface(sr, interface);
+        handle_arp_request(sr, len, arp_header, sr_interface, packet);
+      }
+    }
+    
   }
   else
   {
