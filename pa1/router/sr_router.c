@@ -90,7 +90,7 @@ int is_valid_icmp_ip(unsigned int icmp_ip_packet_length, uint8_t *icmp_ip_packet
 void build_arp_hdr(sr_arp_hdr_t *new_arp_reply_hdr, sr_arp_hdr_t *old_arp_reply_hdr)
 {
   /* TODO */
-  new_arp_reply_hdr->
+  new_arp_reply_hdr->ar_op = old_arp_reply_hdr->ar_op;
 
 }
 void build_ethernet_hdr(sr_ethernet_hdr_t *ethernet_hdr)
@@ -103,7 +103,7 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
   
   printf("Received ARP Request \n");
   uint8_t *new_packet_hdr = malloc(packet_length);
-  sr_arp_hdr_t *arp_reply_hdr = (sr_arp_hdr_t *)(new_packet_hdr + sizeof(sr_ethernet_hdr_t));
+  sr_arp_hdr_t *new_arp_reply_hdr = (sr_arp_hdr_t *)(new_packet_hdr + sizeof(sr_ethernet_hdr_t));
 
   /* Build an ARP Header
     Copy the arp request
@@ -118,7 +118,7 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 
 
   */
-  build_arp_hdr(arp_reply_hdr);
+  build_arp_hdr(new_arp_reply_hdr, arp_header);
   free(new_packet_hdr);
   return 1;
 }
