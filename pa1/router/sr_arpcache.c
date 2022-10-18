@@ -68,7 +68,10 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
                 */
 
                 /* Send unreachable ICMP packet */
-                send_icmp(sr, 3, 1, srp->buf, srp->len);
+                struct sr_if* interface = sr_get_interface(sr, srp->iface);
+                if (interface){
+                    send_icmp(sr, 3, 1, srp->buf, srp->len);
+                }
 
                 /* Iterate linked list*/
                 srp = srp->next;

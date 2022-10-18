@@ -125,7 +125,6 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 
   print_hdr_eth((uint8_t*)new_ethr_hdr);
   
-  printf("\n");
   print_hdr_arp((uint8_t*)new_arp_reply_hdr);
 
   sr_send_packet(sr, (uint8_t *)new_arp_reply_hdr, packet_length, sr_interface->name);
@@ -216,7 +215,7 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
     }
     else
     {
-      printf("Router Received TCP/UDP message send port unreachable");
+      printf("Router Received TCP/UDP message send port unreachable: Send type 3 code 3 icmp message\n");
       /*
       type: 3
       code: 3
@@ -380,7 +379,7 @@ void construct_icmp_ethr_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hd
 void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uint8_t *packet, unsigned int packet_length)
 {
 
-  printf("Send ICMP type: %d, code %d\n", icmp_type, icmp_code);
+  printf("Send ICMP type: %d, code: %d\n", icmp_type, icmp_code);
 
   sr_ethernet_hdr_t *new_ethernet_hdr;
   sr_ip_hdr_t *new_ip_hdr;
