@@ -432,7 +432,7 @@ void sr_handlepacket(struct sr_instance *sr,
     */
     if (system_arp_op == arp_op_reply)
     {
-      handle_arp_reqply()
+      /* handle_arp_reply();*/
     }
 
     else if (system_arp_op == arp_op_request)
