@@ -3,6 +3,8 @@
 #include <string.h>
 #include "sr_protocol.h"
 #include "sr_utils.h"
+#include "sr_rt.h"
+#include "sr_router.h"
 
 
 uint16_t cksum (const void *_data, int len) {
@@ -181,5 +183,32 @@ void print_hdrs(uint8_t *buf, uint32_t length) {
   else {
     fprintf(stderr, "Unrecognized Ethernet Type: %d\n", ethtype);
   }
+}
+
+
+/* Returns longest prefix that matches dest_ip, NULl if dest_ip does not exist in routing table */
+struct sr_rt *get_longest_matched_prefix(uint32_t dest_ip, struct sr_instance *sr)
+{
+  struct sr_rt *rt_entry = sr->routing_table;
+  struct sr_rt *longest_matched_entry = NULL;
+  uint32_t masked_dest_ip;
+  uint32_t masked_rt_entry_ip;
+  while (rt_entry)
+  {
+    /* if bits match */
+
+    masked_dest_ip = dest_ip & rt_entry->mask.s_addr;
+    masked_rt_entry_ip = rt_entry->dest.s_addr & rt_entry->mask.s_addr;
+    /* if there is an ip match and the ip match is longer set IP*/
+    if (masked_dest_ip == masked_rt_entry_ip)
+    {
+      if (!longest_matched_entry || rt_entry->mask.s_addr > longest_matched_entry->mask.s_addr)
+      {
+        longest_matched_entry = rt_entry;
+      }
+    }
+    rt_entry = rt_entry->next;
+  }
+  return longest_matched_entry;
 }
 
