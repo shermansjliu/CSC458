@@ -473,7 +473,7 @@ void sr_handlepacket(struct sr_instance *sr,
   else if (ethertype(packet) == ethertype_arp)
   {
     printf("This is an ARP Packet \n");
-    sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *)(packet + sizeof(sr_arp_hdr_t));
+    sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
     int is_target_ip_one_of_routers_ip = 0;
     struct sr_if *if_curr = sr->if_list;
@@ -486,6 +486,7 @@ void sr_handlepacket(struct sr_instance *sr,
       }
       if_curr = if_curr->next;
     }
+
     if (is_target_ip_one_of_routers_ip)
     {
     printf("Target IP is in router\n"); 
