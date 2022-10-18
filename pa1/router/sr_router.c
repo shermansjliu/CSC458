@@ -459,7 +459,7 @@ void sr_handlepacket(struct sr_instance *sr,
 
   if (is_ethernet_packet_too_short(len))
   {
-    printf("Invalid Ethernet packet: too short\n");
+    printf("Invalid Ethernet packet: too short");
     return;
   }
 
@@ -476,16 +476,14 @@ void sr_handlepacket(struct sr_instance *sr,
     printf("This is an ARP Packet \n");
     sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *)(packet + sizeof(sr_arp_hdr_t));
 
-    unsigned short system_arp_op = ntohs(arp_header->ar_op);
-
     /* TODO add a check for this if the target IP address is one of your router’s IP addresses.*/
-    if (system_arp_op == arp_op_reply)
+    if (ntohs(arp_header->ar_op)== arp_op_reply)
     {
       printf("Processing arp reply\n");
       handle_arp_reply(sr, packet);
     }
 
-    else if (system_arp_op == arp_op_request)
+    else if (ntohs(arp_header->ar_op) == arp_op_request)
     {
       printf("Proessing arp request\n");
       struct sr_if *sr_interface = sr_get_interface(sr, interface);
