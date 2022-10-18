@@ -100,7 +100,6 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 {
   printf("Received ARP Request \n");
   uint8_t *new_packet_hdr = malloc(packet_length);
-  sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)new_packet_hdr;
   sr_arp_hdr_t *arp_reply_hdr = (sr_arp_hdr_t *)(new_packet_hdr + sizeof(sr_ethernet_hdr_t));
 
   /* ARP Header*/
@@ -325,7 +324,7 @@ void construct_echo_ethr_hdr(sr_ethernet_hdr_t *old_ethernet_hdr)
   memmove(old_ethernet_hdr->ether_dhost, old_ethernet_shost, ETHER_ADDR_LEN);
   
   free(old_ethernet_shost);
-  // memset(old_ethernet_hdr->ether_dhost, 0, ETHER_ADDR_LEN);
+  /* memset(old_ethernet_hdr->ether_dhost, 0, ETHER_ADDR_LEN); */
 }
 
 void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uint8_t *packet, unsigned int packet_length)
@@ -341,7 +340,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
   struct sr_rt *potential_matched_entry = get_longest_matched_prefix(old_ip_hdr->ip_dst, sr);
   struct sr_if *matched_entry_interface = sr_get_interface(sr, potential_matched_entry->interface);
 
-  if (potential_matched_entry = NULL)
+  if (potential_matched_entry == NULL)
   {
     printf("No matching entry \n");
     return;
@@ -359,7 +358,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     memmove(new_ethernet_hdr->ether_shost, matched_entry_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
 
     new_ip_hdr = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
-    sr_icmp_hdr_t *new_icmp_t3_hdr;
+    sr_icmp_t3_hdr_t *new_icmp_t3_hdr;
 
     new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
@@ -377,7 +376,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
   {
 
     printf("Construct ICMP for Echo packet\n");
-    sr_icmp_hdr_t *old_icmp_hdr;
+    sr_icmp_hdr_t *old_icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
     construct_echo_icmp_hdr(old_icmp_hdr, icmp_code, icmp_type, packet_length);
     /* swap src and dst */
@@ -385,7 +384,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     old_ip_hdr->ip_dst = old_ip_hdr->ip_src;
     old_ip_hdr->ip_src = og_ip_dst;
 
-    construct_echo_ethr_hdr(new_ethernet_hdr);
+    construct_echo_ethr_hdr(old_ethernet_hdr);
 
     printf("Forward IP Packet");
     route_ip_packet(sr, packet, packet_length, matched_entry_interface);
@@ -425,7 +424,7 @@ void sr_handlepacket(struct sr_instance *sr,
     sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *)(packet + sizeof(sr_arp_hdr_t));
 
     unsigned short system_arp_op = ntohs(arp_header->ar_op);
-    struct sr_arpcache *arp_cache = &sr->cache;
+   /*  struct sr_arpcache *arp_cache = &sr->cache; */
 
     /*
       TODO implement arp reply and request handlers

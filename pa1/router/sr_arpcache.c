@@ -51,10 +51,8 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
                  */
 
                 /*
-                /*
-                memcpy(eth_hdr->ether_shost, broadcast, sizeof(uint8_t) * ETHER_ADDR_LEN); /* Dest Address will be broadcast */
+                memcpy(eth_hdr->ether_shost, broadcast, sizeof(uint8_t) * ETHER_ADDR_LEN);  Dest Address will be broadcast 
 
-                /*
                 eth_hdr->ether_type = ethertype_ip;
 
                 int total_size = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_icmp_hdr);
