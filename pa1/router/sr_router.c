@@ -87,9 +87,11 @@ int is_valid_icmp_ip(unsigned int icmp_ip_packet_length, uint8_t *icmp_ip_packet
 /*
  Create ARP Request and send it to the right interface
 */
-void build_arp_hdr(sr_arp_hdr_t *arp_reply_hdr)
+void build_arp_hdr(sr_arp_hdr_t *new_arp_reply_hdr, sr_arp_hdr_t *old_arp_reply_hdr)
 {
   /* TODO */
+  new_arp_reply_hdr->
+
 }
 void build_ethernet_hdr(sr_ethernet_hdr_t *ethernet_hdr)
 {
@@ -98,16 +100,34 @@ void build_ethernet_hdr(sr_ethernet_hdr_t *ethernet_hdr)
 
 int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_arp_hdr_t *arp_header, struct sr_if *sr_interface, uint8_t *packet)
 {
+  
   printf("Received ARP Request \n");
   uint8_t *new_packet_hdr = malloc(packet_length);
   sr_arp_hdr_t *arp_reply_hdr = (sr_arp_hdr_t *)(new_packet_hdr + sizeof(sr_ethernet_hdr_t));
 
-  /* ARP Header*/
+  /* Build an ARP Header
+    Copy the arp request
+    |Ethernet-ARP|
+
+     ARP attributes
+      ARP sender = incoming interface ip
+      ARP target mac = sender's mac
+
+      Everything else same
+
+
+
+  */
   build_arp_hdr(arp_reply_hdr);
   free(new_packet_hdr);
   return 1;
 }
 
+int handle_arp_reply(struct sr_instance *sr){
+  /*
+  
+  */
+}
 int handle_icmp_ip(struct sr_instance *sr, unsigned int icmp_ip_packet_length, uint8_t *icmp_packet)
 {
   if (!is_valid_icmp_ip(icmp_ip_packet_length, icmp_packet))
@@ -430,7 +450,7 @@ void sr_handlepacket(struct sr_instance *sr,
     */
     if (system_arp_op == arp_op_reply)
     {
-      /* handle_arp_reply();*/
+       handle_arp_reply(sr);
     }
 
     else if (system_arp_op == arp_op_request)
@@ -441,6 +461,8 @@ void sr_handlepacket(struct sr_instance *sr,
 
     
   }
+  else{
   printf("Packet is of invalid type \n");
+  }
 
 } /* end sr_ForwardPacket */
