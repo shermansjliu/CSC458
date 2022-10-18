@@ -507,8 +507,7 @@ void sr_handlepacket(struct sr_instance *sr,
       else if (ntohs(arp_header->ar_op) == arp_op_request)
       {
         printf("Proessing arp request\n");
-        struct sr_if *sr_interface = sr_get_interface(sr, interface);
-        handle_arp_request(sr, len, arp_header, sr_interface, packet);
+        handle_arp_request(sr, len, arp_header, if_curr, packet);
       }
     }
     else {
