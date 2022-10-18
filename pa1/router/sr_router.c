@@ -122,6 +122,11 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 
   build_arp_reply_ethernet_hdr(new_ethr_hdr, old_ethr_hdr, sr_interface);
   build_arp_hdr(new_arp_reply_hdr, old_arp_reply_hdr, sr_interface);
+
+  print_hdr_eth((uint8_t*)new_ethr_hdr);
+  
+  printf("\n");
+  print_hdr_arp((uint8_t*)new_arp_reply_hdr);
   free(new_packet_hdr);
   return 1;
 }
