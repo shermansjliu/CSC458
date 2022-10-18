@@ -475,8 +475,6 @@ void sr_handlepacket(struct sr_instance *sr,
     printf("This is an ARP Packet \n");
     sr_arp_hdr_t *arp_header = (sr_arp_hdr_t *)(packet + sizeof(sr_arp_hdr_t));
 
-    /* TODO add a check for this if the target IP address is one of your router’s IP addresses.*/
-
     int is_target_ip_one_of_routers_ip = 0;
     struct sr_if *if_curr = sr->if_list;
     while (if_curr)
@@ -486,6 +484,7 @@ void sr_handlepacket(struct sr_instance *sr,
         is_target_ip_one_of_routers_ip = 1;
         break;
       }
+      if_curr = if_curr->next;
     }
     
     if (is_target_ip_one_of_routers_ip)
@@ -503,7 +502,7 @@ void sr_handlepacket(struct sr_instance *sr,
         handle_arp_request(sr, len, arp_header, sr_interface, packet);
       }
     }
-    
+
   }
   else
   {
