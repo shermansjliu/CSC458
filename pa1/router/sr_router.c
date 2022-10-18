@@ -486,9 +486,10 @@ void sr_handlepacket(struct sr_instance *sr,
       }
       if_curr = if_curr->next;
     }
-    
     if (is_target_ip_one_of_routers_ip)
     {
+    printf("Target IP is in router\n"); 
+
       if (ntohs(arp_header->ar_op) == arp_op_reply)
       {
         printf("Processing arp reply\n");
@@ -501,6 +502,9 @@ void sr_handlepacket(struct sr_instance *sr,
         struct sr_if *sr_interface = sr_get_interface(sr, interface);
         handle_arp_request(sr, len, arp_header, sr_interface, packet);
       }
+    }
+    else {
+      printf("Target IP is not in router\n");
     }
 
   }
