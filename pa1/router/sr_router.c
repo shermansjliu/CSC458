@@ -127,6 +127,8 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
   
   printf("\n");
   print_hdr_arp((uint8_t*)new_arp_reply_hdr);
+
+  sr_send_packet(sr, (uint8_t *)new_arp_reply_hdr, packet_length, sr_interface->name);
   free(new_packet_hdr);
   return 1;
 }
