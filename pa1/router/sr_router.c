@@ -109,7 +109,6 @@ void build_arp_hdr(sr_arp_hdr_t *new_arp_reply_hdr, sr_arp_hdr_t *arp_request_hd
 void build_arp_reply_ethernet_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hdr_t *old_ethernet_hdr, struct sr_if *sr_interface)
 {
   new_ethernet_hdr->ether_type = htons(ethertype_arp);
-  /*new_ethernet_hdr->ether_type = old_ethernet_hdr->ether_type; /*TODO Check if this change works*/
   
   /*check if using memcopy makes a difference */
   memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
@@ -175,13 +174,18 @@ int handle_icmp_ip(struct sr_instance *sr, unsigned int icmp_ip_packet_length, u
   {
     return 0;
   }
+
   sr_icmp_hdr_t *icmp_header = (sr_icmp_hdr_t *)(icmp_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+  print_hdr_icmp((uint8_t*) icmp_header);
+
   /* 8 : icmp request type 8 means an echo */
   if (icmp_header->icmp_type == 8)
   {
     send_icmp(sr, 8, 0, icmp_packet, icmp_ip_packet_length);
+    return 1;
   }
-  return 1;
+  return 0;
 }
 /* Need to pass in packet and packet_length in case ip packet is an icmp ip packet */
 int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *packet, unsigned int packet_length, char *interface_name)
@@ -200,23 +204,23 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
   /* Find destination interface of the packet */
   struct sr_if *sr_interface = sr_get_interface(sr, interface_name);
   struct sr_if *if_curr = sr->if_list;
-  int is_sr_destination = 0;
+  int is_interface_in_table = 0;
   while (if_curr)
   {
     if (if_curr->ip == sr_interface->ip)
     {
-      is_sr_destination = 1;
+      is_interface_in_table = 1;
       break;
     }
     if_curr = if_curr->next;
   }
 
-  if (is_sr_destination)
+  if (is_interface_in_table)
   {
-    printf("Packet destination is the router \n");
+    printf("IP exists in routing table");
     if (ip_header->ip_p == ip_protocol_icmp)
     {
-      printf("ICMP Message in router \n");
+      printf("IP Packet is an ICMP message \n");
       handle_icmp_ip(sr, packet_length, packet);
     }
     else
