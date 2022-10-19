@@ -108,7 +108,7 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             arpr->times_sent++;
 
             /* Free Malloced data*/
-            /*free(buf);*/
+            free(buf);
         }
     }
 }

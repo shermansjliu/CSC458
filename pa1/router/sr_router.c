@@ -443,6 +443,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     print_hdr_icmp((uint8_t *)new_packet +  sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
     route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);
+    printf("IP packet was routed \n");
     free(new_packet);
   }
 
