@@ -182,7 +182,8 @@ int handle_icmp_ip(struct sr_instance *sr, unsigned int icmp_ip_packet_length, u
   /* 8 : icmp request type 8 means an echo */
   if (icmp_header->icmp_type == 8)
   {
-    send_icmp(sr, 8, 0, icmp_packet, icmp_ip_packet_length);
+    printf("ICMP ECHO\n");
+    send_icmp(sr, 0, 0, icmp_packet, icmp_ip_packet_length);
     return 1;
   }
   return 0;
