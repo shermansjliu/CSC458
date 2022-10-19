@@ -330,11 +330,11 @@ int is_ethernet_packet_too_short(unsigned int packet_length)
 void construct_type_3_11_ip_hdr(sr_ip_hdr_t *new_ip_hdr, uint8_t icmp_code, sr_ip_hdr_t *old_ip_hdr, struct sr_instance *sr, struct sr_if *matched_entry_interface)
 {
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
-  new_ip_hdr->ip_ttl = 168;
+  new_ip_hdr->ip_ttl = 168;  /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
   new_ip_hdr->ip_id = 0;
   new_ip_hdr->ip_off = htons(IP_DF);
-  new_ip_hdr->ip_p = ip_protocol_icmp; /* some large number within 8 bits*/
+  new_ip_hdr->ip_p = ip_protocol_icmp;
 
   /* If the port is unreachable, send an icmp packet back to the host*/
   if (icmp_code == 3)
@@ -404,14 +404,15 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
   sr_ethernet_hdr_t *old_ethernet_hdr = (sr_ethernet_hdr_t *)(packet);
 
   /* Outgoing interface */
-  struct sr_rt *potential_matched_entry = get_longest_matched_prefix(old_ip_hdr->ip_dst, sr);
-  struct sr_if *matched_entry_interface = sr_get_interface(sr, potential_matched_entry->interface);
+  struct sr_rt *potential_matched_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
 
   if (potential_matched_entry == NULL)
   {
     printf("No matching entry \n");
     return;
   }
+
+  struct sr_if *matched_entry_interface = sr_get_interface(sr, potential_matched_entry->interface);
 
   if (icmp_type == 3 || icmp_type == 11)
   {
@@ -428,16 +429,16 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-    printf("Set ICMP ethernet hdr\n");
+    printf("Set packet's ethernet hdr\n");
     construct_icmp_ethr_hdr(new_ethernet_hdr, old_ethernet_hdr);
 
-    printf("Set ICMP IP hdr\n");
+    printf("Set packet's IP hdr\n");
     construct_type_3_11_ip_hdr(new_ip_hdr, icmp_code, old_ip_hdr, sr, matched_entry_interface);
 
-    printf("Set ICMP ICMP hdr\n");
+    printf("Set packet's ICMP3 hdr\n");
     construct_type_3_11_icmp_hdr(new_icmp_t3_hdr, icmp_code, icmp_type, old_ip_hdr);
 
-    print_addr_eth((uint8_t *)new_packet);
+    print_hdr_eth((uint8_t *)new_packet);
     print_hdr_ip((uint8_t *) new_packet + sizeof(sr_ethernet_hdr_t));
     print_hdr_icmp((uint8_t *)new_packet +  sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
