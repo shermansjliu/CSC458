@@ -428,12 +428,18 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
-    printf("Set ICMP IP hdr\n");
-    construct_type_3_11_ip_hdr(new_ip_hdr, icmp_code, old_ip_hdr, sr, matched_entry_interface);
-    printf("Set ICMP ICMP hdr\n");
-    construct_type_3_11_icmp_hdr(new_icmp_t3_hdr, icmp_code, icmp_type, old_ip_hdr);
     printf("Set ICMP ethernet hdr\n");
     construct_icmp_ethr_hdr(new_ethernet_hdr, old_ethernet_hdr);
+
+    printf("Set ICMP IP hdr\n");
+    construct_type_3_11_ip_hdr(new_ip_hdr, icmp_code, old_ip_hdr, sr, matched_entry_interface);
+
+    printf("Set ICMP ICMP hdr\n");
+    construct_type_3_11_icmp_hdr(new_icmp_t3_hdr, icmp_code, icmp_type, old_ip_hdr);
+
+    print_addr_eth((uint8_t *)new_packet);
+    print_hdr_ip((uint8_t *) new_packet + sizeof(sr_ethernet_hdr_t));
+    print_hdr_icmp((uint8_t *)new_packet +  sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
     route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);
     free(new_packet);
