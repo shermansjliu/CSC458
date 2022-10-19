@@ -209,6 +209,12 @@ struct sr_rt *get_longest_matched_prefix(uint32_t dest_ip, struct sr_instance *s
     }
     rt_entry = rt_entry->next;
   }
+  
+  if (rt_entry) {
+    printf("Longest matching prefix dst");
+    print_addr_ip(rt_entry->dest);
+    printf("\n");
+  }
   return longest_matched_entry;
 }
 

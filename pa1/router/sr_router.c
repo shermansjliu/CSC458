@@ -252,6 +252,8 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
       printf("Successfully forwarded packet\n");
       return 1;
   }
+  return 1;
+
 }
 void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr) {
    ip_hdr->ip_ttl--;
