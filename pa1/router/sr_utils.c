@@ -202,7 +202,7 @@ struct sr_rt *get_longest_matched_prefix(uint32_t dest_ip, struct sr_instance *s
     /* if there is an ip match and the ip match is longer set IP*/
     if (masked_dest_ip == masked_rt_entry_ip)
     {
-      if (!longest_matched_entry || rt_entry->mask.s_addr > longest_matched_entry->mask.s_addr)
+      if (longest_matched_entry == NULL || rt_entry->mask.s_addr > longest_matched_entry->mask.s_addr)
       {
         longest_matched_entry = rt_entry;
       }

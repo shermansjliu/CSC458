@@ -343,11 +343,11 @@ void construct_type_3_11_ip_hdr(sr_ip_hdr_t *new_ip_hdr, uint8_t icmp_code, sr_i
   new_ip_hdr->ip_id = 0;
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
-
   /* If the port is unreachable, send an icmp packet back to the host*/
+
   if (icmp_code == 3)
   {
-    new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
+    new_ip_hdr->ip_src = old_ip_hdr->ip_src;
   }
   /*
   code 0
@@ -359,8 +359,9 @@ void construct_type_3_11_ip_hdr(sr_ip_hdr_t *new_ip_hdr, uint8_t icmp_code, sr_i
    */
   else
   {
-    new_ip_hdr->ip_dst = matched_entry_interface->ip;
+    new_ip_hdr->ip_src = matched_entry_interface->ip;
   }
+  new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
   new_ip_hdr->ip_sum = 0;
   new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
 }
@@ -434,6 +435,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     sr_icmp_t3_hdr_t *new_icmp_t3_hdr;
 
     new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    
 
     printf("Set packet's ethernet hdr\n");
     construct_icmp_ethr_hdr(new_ethernet_hdr, old_ethernet_hdr);
