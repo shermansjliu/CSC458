@@ -293,7 +293,8 @@ int route_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet
 
   struct sr_arpreq *arp_req;
   struct sr_arpcache *arp_cache = &sr->cache;
-  struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, dest_ip);
+  struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, potential_rt_entry->gw.s_addr);
+  /*struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, dest_ip);*/
 
   /* Send an ARP request for the next-hop IP and add the packet to the queue of packets waiting on this ARP request. */
   if (cached_entry == NULL)
