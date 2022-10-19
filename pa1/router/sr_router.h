@@ -66,7 +66,6 @@ int route_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet
 void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr);
 void construct_type_3_11_ip_hdr(sr_ip_hdr_t *new_ip_hdr, uint8_t icmp_code, sr_ip_hdr_t *old_ip_hdr, struct sr_instance *sr, struct sr_if *matched_entry_interface);
 void construct_type_3_11_icmp_hdr(sr_icmp_t3_hdr_t *new_icmp_hdr, uint8_t icmp_code, uint8_t icmp_type, sr_ip_hdr_t *sr_ip_hdr);
-void check_arpcache_and_send(struct sr_instance *sr, struct sr_if *incoming_interface, uint32_t dest_ip, uint8_t *packet, unsigned int packet_length);
 
 /* -- sr_if.c -- */
 void sr_add_interface(struct sr_instance* , const char* );

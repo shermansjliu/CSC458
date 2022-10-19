@@ -131,8 +131,7 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 
   print_hdr_arp((uint8_t *)new_arp_reply_hdr);
 
-  check_arpcache_and_send(sr, sr_interface, new_arp_reply_hdr->ar_tip, (uint8_t *)new_arp_reply_hdr, packet_length);
-  /*sr_send_packet(sr, new_packet_hdr, packet_length, sr_interface->name);*/
+  sr_send_packet(sr, new_packet_hdr, packet_length, sr_interface->name);
   free(new_packet_hdr);
   return 1;
 }
@@ -253,9 +252,7 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
       printf("Successfully forwarded packet\n");
       return 1;
   }
-  return 1;
 }
-
 void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr) {
    ip_hdr->ip_ttl--;
     if (ip_hdr->ip_ttl == 0)
@@ -271,9 +268,27 @@ void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length
 
 }
 
-void check_arpcache_and_send(struct sr_instance *sr, struct sr_if *incoming_interface, uint32_t dest_ip, uint8_t *packet, unsigned int packet_length)
+/* Custom method: returns 1 if routing succedeeds, 0 otherwise*/
+int route_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *incoming_interface)
 {
-  
+  sr_ip_hdr_t *ip_packet_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  uint32_t dest_ip = ip_packet_hdr->ip_dst;
+
+  struct sr_rt *potential_rt_entry;
+  potential_rt_entry = get_longest_matched_prefix(dest_ip, sr);
+
+  if (potential_rt_entry == NULL)
+  {
+    /*
+    type: 3
+    code: 0
+    Sent if there is a non-existent route to the destination IP (no matching entry in the routing table when forwarding an IP packet).
+    */
+    printf("IP does not exist in routing table \n");
+    send_icmp(sr, 3, 0, packet, packet_length);
+    return 0;
+  }
+
   struct sr_arpreq *arp_req;
   struct sr_arpcache *arp_cache = &sr->cache;
   struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, dest_ip);
@@ -303,35 +318,6 @@ void check_arpcache_and_send(struct sr_instance *sr, struct sr_if *incoming_inte
     /* freeing this based on sr_arpcache_lookup implementation */
     free(cached_entry);
   }
-}
-/* Custom method: returns 1 if routing succedeeds, 0 otherwise*/
-int route_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *incoming_interface)
-{
-  sr_ip_hdr_t *ip_packet_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-  uint32_t dest_ip = ip_packet_hdr->ip_dst;
-
-  handle_ttl(ip_packet_hdr, packet, packet_length, sr);
-
-  struct sr_rt *potential_rt_entry;
-  potential_rt_entry = get_longest_matched_prefix(dest_ip, sr);
-
-  if (potential_rt_entry == NULL)
-  {
-    /*
-    type: 3
-    code: 0
-    Sent if there is a non-existent route to the destination IP (no matching entry in the routing table when forwarding an IP packet).
-    */
-    printf("IP does not exist in routing table \n");
-    send_icmp(sr, 3, 0, packet, packet_length);
-    return 0;
-  }
-
-  printf("Longest matching prefix dst");
-  print_addr_ip(potential_rt_entry->dest);
-  printf("\n");
-  check_arpcache_and_send(sr, incoming_interface, dest_ip, packet, packet_length);
-
   return 1;
 }
 
@@ -459,6 +445,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     print_hdr_ip((uint8_t *)new_packet + sizeof(sr_ethernet_hdr_t));
     print_hdr_icmp((uint8_t *)new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
+    handle_ttl(new_ip_hdr, new_packet, new_packet_length, sr);
     route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);
     free(new_packet);
   }
@@ -485,6 +472,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     construct_icmp_ethr_hdr(new_ethernet_hdr, old_ethernet_hdr);
 
     printf("Forward IP Packet");
+    handle_ttl(new_ip_hdr, echo_packet, packet_length, sr);
     route_ip_packet(sr, echo_packet, packet_length, matched_entry_interface);
     free(echo_packet);
   }
