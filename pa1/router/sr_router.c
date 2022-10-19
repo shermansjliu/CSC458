@@ -215,17 +215,18 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
     if_curr = if_curr->next;
   }
 
+  
   if (is_interface_in_table)
   {
-    printf("IP exists in routing table");
+    printf("=====Handling IP Packet====\n");
     if (ip_header->ip_p == ip_protocol_icmp)
     {
-      printf("IP Packet is an ICMP message \n");
+      printf("\n IP PACKET IS AN ICMP MESSAGE \n");
       handle_icmp_ip(sr, packet_length, packet);
     }
     else
     {
-      printf("Router Received TCP/UDP message send port unreachable: Send type 3 code 3 icmp message\n");
+      printf("IP Packet is a TCP/UDP MESSAGE\n");
       /*
       type: 3
       code: 3
