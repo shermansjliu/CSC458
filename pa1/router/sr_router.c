@@ -422,8 +422,6 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     new_ethernet_hdr = (sr_ethernet_hdr_t *)(new_packet);
     
-    
-
     new_ip_hdr = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
     sr_icmp_t3_hdr_t *new_icmp_t3_hdr;
 
@@ -444,7 +442,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);
     printf("IP packet was routed \n");
-    free(new_packet);
+    /*free(new_packet); TODO UNCOMMENTS*/ 
   }
 
   /*echo reply return original stuff */
