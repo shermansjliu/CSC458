@@ -16,12 +16,12 @@ unsigned char broadcast_addr[ETHER_ADDR_LEN] = {255, 255, 255, 255, 255, 255};
 
 void create_arp_request_packet(struct sr_arp_hdr *new_arp_hdr, struct sr_arpreq *arpr, struct sr_instance *sr, struct sr_if *sif)
 {
-    new_arp_hdr->ar_hrd = (unsigned char)htons(arp_hrd_ethernet);                    /* Ethernet */
-    new_arp_hdr->ar_pro = (unsigned char)htons(ethertype_ip);                        /* IPv4 */
-    new_arp_hdr->ar_hln = (unsigned char)ETHER_ADDR_LEN;                             /* Ethernet protocol length */
-    new_arp_hdr->ar_pln = (unsigned char)sizeof(uint32_t);                           /* IPv4 protocol length */
-    new_arp_hdr->ar_op = (unsigned char)htons(arp_op_request);                       /* Should be 1 here */
-    memmove(new_arp_hdr->ar_sha, sif->addr, sizeof(unsigned char) * ETHER_ADDR_LEN); /* Use Interface Address */
+    new_arp_hdr->ar_hrd = htons(arp_hrd_ethernet);                    /* Ethernet */
+    new_arp_hdr->ar_pro = htons(ethertype_ip);                        /* IPv4 */
+    new_arp_hdr->ar_hln = ETHER_ADDR_LEN;                             /* Ethernet protocol length */
+    new_arp_hdr->ar_pln = sizeof(uint32_t);                           /* IPv4 protocol length */
+    new_arp_hdr->ar_op = htons(arp_op_request);                       /* Should be 1 here */
+    memmove(new_arp_hdr->ar_sha, sif->addr, ETHER_ADDR_LEN); /* Use Interface Address */
     new_arp_hdr->ar_sip = sif->ip;                                                   /* Sender IP from Interface */
     new_arp_hdr->ar_tip = arpr->ip;                                                  /* Target IP from Request */
     memset(new_arp_hdr->ar_tha, 0x00, ETHER_ADDR_LEN);                               /* set to 0 to be safe https://piazza.com/class/l5gx8w2al3g4zh/post/207*/
