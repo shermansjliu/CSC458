@@ -385,6 +385,10 @@ void construct_icmp_ethr_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hd
   new_ethernet_hdr->ether_type = htons(ethertype_ip);
   memmove(new_ethernet_hdr->ether_shost, old_ethernet_hdr->ether_dhost, ETHER_ADDR_LEN);
   memmove(old_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
+  /* 
+  memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
+    memmove(new_ethernet_hdr->ether_shost, matched_entry_interface->addr, ETHER_ADDR_LEN);
+    */
   /* TODO what to set this as??*/
 }
 
@@ -395,8 +399,10 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
   sr_ethernet_hdr_t *new_ethernet_hdr;
   sr_ip_hdr_t *new_ip_hdr;
+
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *old_ethernet_hdr = (sr_ethernet_hdr_t *)(packet);
+
   /* Outgoing interface */
   struct sr_rt *potential_matched_entry = get_longest_matched_prefix(old_ip_hdr->ip_dst, sr);
   struct sr_if *matched_entry_interface = sr_get_interface(sr, potential_matched_entry->interface);
@@ -414,9 +420,8 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     uint8_t *new_packet = malloc(new_packet_length);
 
     new_ethernet_hdr = (sr_ethernet_hdr_t *)(new_packet);
-    new_ethernet_hdr->ether_type = htons(ethertype_ip);
-    memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, sizeof(uint8_t) * ETHER_ADDR_LEN);
-    memmove(new_ethernet_hdr->ether_shost, matched_entry_interface->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);
+    
+    
 
     new_ip_hdr = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
     sr_icmp_t3_hdr_t *new_icmp_t3_hdr;
@@ -437,7 +442,6 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
   /*echo reply return original stuff */
   else if (icmp_type == 0)
   {
-
     uint8_t *echo_packet = malloc(packet_length);
     printf("Construct ICMP for Echo packet\n");
     sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(echo_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
