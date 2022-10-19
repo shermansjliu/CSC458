@@ -427,7 +427,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     new_ip_hdr = (sr_ip_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t));
     sr_icmp_t3_hdr_t *new_icmp_t3_hdr;
 
-    new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+    new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(new_packet+ sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
     printf("Set packet's ethernet hdr\n");
     construct_icmp_ethr_hdr(new_ethernet_hdr, old_ethernet_hdr);
