@@ -240,17 +240,18 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
 
   else
   {
-    printf("Pccket is destined womewhere else \n");
+    printf("Packet is destined somewhere else \n");
     /* Handle TTL */
     handle_ttl(ip_header, packet, packet_length, sr); 
-
     int route_ip_packet_res = route_ip_packet(sr, packet, packet_length, sr_interface);
     if (!route_ip_packet_res)
     {
+      printf("did not successfully forward packet\n");
       return 0;
     }
+      printf("Successfully forwarded packet\n");
+      return 1;
   }
-  return 1;
 }
 void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr) {
    ip_hdr->ip_ttl--;
@@ -446,7 +447,6 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     handle_ttl(new_ip_hdr, new_packet, new_packet_length, sr);
     route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);
-    printf("IP packet was routed \n");
     free(new_packet);
   }
 
