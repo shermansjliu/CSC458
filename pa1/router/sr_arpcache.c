@@ -14,19 +14,17 @@
 
 unsigned char broadcast_addr[ETHER_ADDR_LEN] = {255, 255, 255, 255, 255, 255};
 
-struct sr_arp_hdr *create_arp_request_packet(struct sr_arpreq *arpr, struct sr_instance *sr, struct sr_if *sif)
+void create_arp_request_packet(struct sr_arp_hdr *new_arp_hdr, struct sr_arpreq *arpr, struct sr_instance *sr, struct sr_if *sif)
 {
-    struct sr_arp_hdr *hdr = malloc(sizeof(struct sr_arp_hdr));
-    hdr->ar_hrd = (unsigned char)htons(arp_hrd_ethernet);                    /* Ethernet */
-    hdr->ar_pro = (unsigned char)htons(ethertype_ip);                        /* IPv4 */
-    hdr->ar_hln = (unsigned char)ETHER_ADDR_LEN;                             /* Ethernet protocol length */
-    hdr->ar_pln = (unsigned char)sizeof(uint32_t);                           /* IPv4 protocol length */
-    hdr->ar_op = (unsigned char)htons(arp_op_request);                       /* Should be 1 here */
-    memmove(hdr->ar_sha, sif->addr, sizeof(unsigned char) * ETHER_ADDR_LEN); /* Use Interface Address */
-    hdr->ar_sip = sif->ip;                                                   /* Sender IP from Interface */
-    hdr->ar_tip = arpr->ip;                                                  /* Target IP from Request */
-    memset(hdr->ar_tha, 0x00, ETHER_ADDR_LEN);                               /* set to 0 to be safe https://piazza.com/class/l5gx8w2al3g4zh/post/207*/
-    return hdr;
+    new_arp_hdr->ar_hrd = (unsigned char)htons(arp_hrd_ethernet);                    /* Ethernet */
+    new_arp_hdr->ar_pro = (unsigned char)htons(ethertype_ip);                        /* IPv4 */
+    new_arp_hdr->ar_hln = (unsigned char)ETHER_ADDR_LEN;                             /* Ethernet protocol length */
+    new_arp_hdr->ar_pln = (unsigned char)sizeof(uint32_t);                           /* IPv4 protocol length */
+    new_arp_hdr->ar_op = (unsigned char)htons(arp_op_request);                       /* Should be 1 here */
+    memmove(new_arp_hdr->ar_sha, sif->addr, sizeof(unsigned char) * ETHER_ADDR_LEN); /* Use Interface Address */
+    new_arp_hdr->ar_sip = sif->ip;                                                   /* Sender IP from Interface */
+    new_arp_hdr->ar_tip = arpr->ip;                                                  /* Target IP from Request */
+    memset(new_arp_hdr->ar_tha, 0x00, ETHER_ADDR_LEN);                               /* set to 0 to be safe https://piazza.com/class/l5gx8w2al3g4zh/post/207*/
 }
 
 void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
@@ -83,18 +81,18 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             printf("=====Sending ARP Request======\n");
 
             struct sr_if *sif = sr_get_interface(sr, arpr->packets->iface);
-            struct sr_arp_hdr *arp_hdr = create_arp_request_packet(arpr, sr, sif);
-            struct sr_ethernet_hdr *eth_hdr = malloc(sizeof(struct sr_ethernet_hdr));
-            memmove(eth_hdr->ether_shost, sif->addr, sizeof(uint8_t) * ETHER_ADDR_LEN);      /* Source address same*/
-            memmove(eth_hdr->ether_dhost, broadcast_addr, sizeof(uint8_t) * ETHER_ADDR_LEN); /* Dest Address will be broadcast*/
-            eth_hdr->ether_type = ethertype_arp;
-
+            
             int total_size = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr);
             uint8_t *buf = malloc(total_size);
-            sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)buf;
-            sr_arp_hdr_t *arp_reply_hdr = (sr_arp_hdr_t *)(buf + sizeof(sr_ethernet_hdr_t));
-            memmove(ethernet_hdr, eth_hdr, sizeof(sr_ethernet_hdr_t));
-            memmove(arp_reply_hdr, arp_hdr, sizeof(sr_arp_hdr_t));
+
+            sr_ethernet_hdr_t *eth_hdr = (sr_ethernet_hdr_t *)(buf);
+            sr_arp_hdr_t *arp_hdr = (sr_arp_hdr_t *)(buf + sizeof(sr_ethernet_hdr_t));
+            create_arp_request_packet(arp_hdr, arpr, sr, sif);
+            
+            /*Create ethernet hdr*/
+            memmove(eth_hdr->ether_shost, sif->addr, ETHER_ADDR_LEN);      /* Source address same*/
+            memmove(eth_hdr->ether_dhost, broadcast_addr, ETHER_ADDR_LEN); /* Dest Address will be broadcast*/
+            eth_hdr->ether_type = htons(ethertype_arp);
 
             int res = sr_send_packet(sr, buf, total_size, sif->name);
             if (res != 0)
@@ -103,12 +101,10 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             } else {
                 printf("ARP request sent successfully \n");
             }
-            arpr->sent = time(NULL);
+            arpr->sent = current_time;
             arpr->times_sent++;
 
             /* Free Malloced data*/
-            free(eth_hdr);
-            free(arp_hdr);
             free(buf);
         }
     }
