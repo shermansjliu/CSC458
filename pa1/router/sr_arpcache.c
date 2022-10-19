@@ -82,7 +82,7 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
 
             struct sr_if *sif = sr_get_interface(sr, arpr->packets->iface);
             
-            int total_size = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_arp_hdr);
+            int total_size = sizeof(sr_ethernet_hdr_t) + sizeof(sr_arp_hdr_t);
             uint8_t *buf = malloc(total_size);
 
             sr_ethernet_hdr_t *eth_hdr = (sr_ethernet_hdr_t *)(buf);
@@ -93,6 +93,9 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             memmove(eth_hdr->ether_shost, sif->addr, ETHER_ADDR_LEN);      /* Source address same*/
             memmove(eth_hdr->ether_dhost, broadcast_addr, ETHER_ADDR_LEN); /* Dest Address will be broadcast*/
             eth_hdr->ether_type = htons(ethertype_arp);
+
+            print_hdr_eth((uint8_t *)eth_hdr);
+            print_hdr_arp((uint8_t *)arp_hdr);
 
             int res = sr_send_packet(sr, buf, total_size, sif->name);
             if (res != 0)
