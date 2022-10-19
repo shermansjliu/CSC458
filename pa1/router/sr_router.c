@@ -94,6 +94,9 @@ void build_arp_hdr(sr_arp_hdr_t *new_arp_reply_hdr, sr_arp_hdr_t *arp_request_hd
   new_arp_reply_hdr->ar_pro = arp_request_hdr->ar_pro;
   new_arp_reply_hdr->ar_hln = arp_request_hdr->ar_hln;
   new_arp_reply_hdr->ar_pln = arp_request_hdr->ar_pln;
+
+  
+  /* One or the other */
   new_arp_reply_hdr->ar_op = htons(arp_op_reply); /* to be extra safe :) */
 
   /* change Src Dest IP and MAC */
@@ -106,11 +109,14 @@ void build_arp_hdr(sr_arp_hdr_t *new_arp_reply_hdr, sr_arp_hdr_t *arp_request_hd
 void build_arp_reply_ethernet_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hdr_t *old_ethernet_hdr, struct sr_if *sr_interface)
 {
   new_ethernet_hdr->ether_type = htons(ethertype_arp);
+  /*new_ethernet_hdr->ether_type = old_ethernet_hdr->ether_type; /*TODO Check if this change works*/
+  
+  /*check if using memcopy makes a difference */
   memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
   memmove(new_ethernet_hdr->ether_shost, sr_interface->addr, ETHER_ADDR_LEN);
 }
 
-int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_arp_hdr_t *old_arp_reply_hdr, struct sr_if *sr_interface, uint8_t *packet)
+int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_arp_hdr_t *arp_req_hdr, struct sr_if *sr_interface, uint8_t *packet)
 {
 
   printf("Received ARP Request, build arp reply \n");
@@ -121,13 +127,13 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
   sr_ethernet_hdr_t *old_ethr_hdr = (sr_ethernet_hdr_t *)(packet);
 
   build_arp_reply_ethernet_hdr(new_ethr_hdr, old_ethr_hdr, sr_interface);
-  build_arp_hdr(new_arp_reply_hdr, old_arp_reply_hdr, sr_interface);
+  build_arp_hdr(new_arp_reply_hdr, arp_req_hdr, sr_interface);
 
   print_hdr_eth((uint8_t*)new_ethr_hdr);
   
   print_hdr_arp((uint8_t*)new_arp_reply_hdr);
 
-  sr_send_packet(sr, (uint8_t *)new_arp_reply_hdr, packet_length, sr_interface->name);
+  sr_send_packet(sr, new_packet_hdr, packet_length, sr_interface->name);
   free(new_packet_hdr);
   return 1;
 }
