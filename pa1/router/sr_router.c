@@ -452,7 +452,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     handle_ttl(new_ip_hdr, new_packet, new_packet_length, sr);
     route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);
-    /*free(new_packet);*/
+    free(new_packet);
   }
 
   /*echo reply return original stuff */
