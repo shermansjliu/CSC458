@@ -242,34 +242,66 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
   {
     printf("Packet is destined somewhere else \n");
     /* Handle TTL */
-    handle_ttl(ip_header, packet, packet_length, sr); 
+    handle_ttl(ip_header, packet, packet_length, sr);
     int route_ip_packet_res = route_ip_packet(sr, packet, packet_length, sr_interface);
     if (!route_ip_packet_res)
     {
       printf("did not successfully forward packet\n");
       return 0;
     }
-      printf("Successfully forwarded packet\n");
-      return 1;
+    printf("Successfully forwarded packet\n");
+    return 1;
   }
   return 1;
-
 }
-void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr) {
-   ip_hdr->ip_ttl--;
-    if (ip_hdr->ip_ttl == 0)
-    {
-      printf("IP Packet Time Limit Exceeded \n");
-      send_icmp(sr, 11, 0, packet, packet_length);
-      return;
-    }
+void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr)
+{
+  ip_hdr->ip_ttl--;
+  if (ip_hdr->ip_ttl == 0)
+  {
+    printf("IP Packet Time Limit Exceeded \n");
+    send_icmp(sr, 11, 0, packet, packet_length);
+    return;
+  }
 
-    /* Recompute modified check sum */
-    ip_hdr->ip_sum = 0;
-    ip_hdr->ip_sum = cksum(ip_hdr, sizeof(sr_ip_hdr_t));
-
+  /* Recompute modified check sum */
+  ip_hdr->ip_sum = 0;
+  ip_hdr->ip_sum = cksum(ip_hdr, sizeof(sr_ip_hdr_t));
 }
 
+void check_arp_cache_send_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *interface, uint32_t dest_ip)
+{
+  struct sr_arpreq *arp_req;
+  struct sr_arpcache *arp_cache = &sr->cache;
+  /*struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, potential_rt_entry->gw.s_addr);*/
+  struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, dest_ip);
+
+  /* Send an ARP request for the next-hop IP and add the packet to the queue of packets waiting on this ARP request. */
+  if (cached_entry == NULL)
+  {
+    printf("ARP entry is not cached, so queue arp request \n");
+
+    arp_req = sr_arpcache_queuereq(arp_cache, dest_ip, packet, packet_length, interface->name);
+    handle_arpreq(arp_req, sr);
+  }
+
+  /* Check the ARP cache for the next-hop MAC address corresponding to the next-hop IP. If it’s there, send it. */
+  else
+  {
+    printf("ARP entry is cached \n");
+
+    /* forward packet to next interface*/
+    sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)(packet);
+    memmove(ethernet_hdr->ether_shost, interface->addr, ETHER_ADDR_LEN); /* memmove is safer than memcopy because memmove has defined behaviour when src and dst memory overlaps :/// */
+    memmove(ethernet_hdr->ether_dhost, cached_entry->mac, ETHER_ADDR_LEN);
+
+    /* send packet */
+    sr_send_packet(sr, packet, packet_length, interface->name);
+
+    /* freeing this based on sr_arpcache_lookup implementation */
+    free(cached_entry);
+  }
+}
 /* Custom method: returns 1 if routing succedeeds, 0 otherwise*/
 int route_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *incoming_interface)
 {
@@ -290,37 +322,9 @@ int route_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet
     send_icmp(sr, 3, 0, packet, packet_length);
     return 0;
   }
+  struct sr_if *outgoing_interface = sr_get_interface(sr, potential_rt_entry->interface);
+  check_arp_cache_send_packet(sr, packet, packet_length, outgoing_interface, dest_ip);
 
-  struct sr_arpreq *arp_req;
-  struct sr_arpcache *arp_cache = &sr->cache;
-  struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, potential_rt_entry->gw.s_addr);
-  /*struct sr_arpentry *cached_entry = sr_arpcache_lookup(arp_cache, dest_ip);*/
-
-  /* Send an ARP request for the next-hop IP and add the packet to the queue of packets waiting on this ARP request. */
-  if (cached_entry == NULL)
-  {
-    printf("ARP entry is not cached, so queue arp request \n");
-
-    arp_req = sr_arpcache_queuereq(arp_cache, dest_ip, packet, packet_length, incoming_interface->name);
-    handle_arpreq(arp_req, sr);
-  }
-
-  /* Check the ARP cache for the next-hop MAC address corresponding to the next-hop IP. If it’s there, send it. */
-  else
-  {
-    printf("ARP entry is cached \n");
-
-    /* forward packet to next interface*/
-    sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)(packet);
-    memmove(ethernet_hdr->ether_shost, incoming_interface->addr, ETHER_ADDR_LEN); /* memmove is safer than memcopy because memmove has defined behaviour when src and dst memory overlaps :/// */
-    memmove(ethernet_hdr->ether_dhost, cached_entry->mac, ETHER_ADDR_LEN);
-
-    /* send packet */
-    sr_send_packet(sr, packet, packet_length, incoming_interface->name);
-
-    /* freeing this based on sr_arpcache_lookup implementation */
-    free(cached_entry);
-  }
   return 1;
 }
 
@@ -435,7 +439,6 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     sr_icmp_t3_hdr_t *new_icmp_t3_hdr;
 
     new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-    
 
     printf("Set packet's ethernet hdr\n");
     construct_icmp_ethr_hdr(new_ethernet_hdr, old_ethernet_hdr);
@@ -451,7 +454,8 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     print_hdr_icmp((uint8_t *)new_packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
 
     handle_ttl(new_ip_hdr, new_packet, new_packet_length, sr);
-    route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);
+    check_arp_cache_send_packet(sr, new_packet, new_packet_length, matched_entry_interface, potential_matched_entry->gw.s_addr);
+    /*route_ip_packet(sr, new_packet, new_packet_length, matched_entry_interface);*/
     free(new_packet);
   }
 
@@ -478,7 +482,8 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     printf("Forward IP Packet");
     handle_ttl(new_ip_hdr, echo_packet, packet_length, sr);
-    route_ip_packet(sr, echo_packet, packet_length, matched_entry_interface);
+    /* route_ip_packet(sr, echo_packet, packet_length, matched_entry_interface);*/
+    check_arp_cache_send_packet(sr, echo_packet, packet_length, matched_entry_interface, potential_matched_entry->gw.s_addr);
     free(echo_packet);
   }
 }
