@@ -48,25 +48,11 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
                  * Sent if five ARP requests were sent to the next-hop IP without a response.
                  */
 
-                /*
-                memcpy(eth_hdr->ether_shost, broadcast, sizeof(uint8_t) * ETHER_ADDR_LEN);  Dest Address will be broadcast 
-
-                eth_hdr->ether_type = ethertype_ip;
-
-                int total_size = sizeof(struct sr_ethernet_hdr) + sizeof(struct sr_icmp_hdr);
-                uint8_t *buf = malloc(total_size);
-                sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)buf;
-                sr_icmp_hdr_t *icmp_header = (sr_icmp_hdr_t *)(buf + sizeof(sr_ethernet_hdr_t));
-                memcpy(ethernet_hdr, eth_hdr, sizeof(sr_ethernet_hdr_t));
-
-
-                 Free buffer and ETH Header, not ICMP packet!
-                free(buf);
-                free(eth_hdr);
-                */
-
                 /* Send unreachable ICMP packet */
+                struct sr_if* inf = sr_get_interface(sr, srp->iface);
+                if (inf != NULL) {
                 send_icmp(sr, 3, 1, srp->buf, srp->len);
+                }
 
                 /* Iterate linked list*/
                 srp = srp->next;
