@@ -347,7 +347,7 @@ void construct_type_3_11_ip_hdr(sr_ip_hdr_t *new_ip_hdr, uint8_t icmp_code, sr_i
 
   if (icmp_code == 3)
   {
-    new_ip_hdr->ip_src = old_ip_hdr->ip_src;
+    new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
   }
   /*
   code 0
