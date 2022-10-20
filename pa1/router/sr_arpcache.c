@@ -84,6 +84,7 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             print_hdr_arp((uint8_t *)arp_hdr);
 
             int res = sr_send_packet(sr, buf, total_size, sif->name);
+            free(buf);
             if (res != 0)
             {
                 printf("Error: ARP request not sent successfully.\n");
@@ -94,7 +95,6 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             arpr->times_sent++;
 
             /* Free Malloced data*/
-            free(buf);
         }
     }
 }
