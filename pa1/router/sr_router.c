@@ -114,7 +114,7 @@ void build_arp_reply_ethernet_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethern
   memmove(new_ethernet_hdr->ether_shost, sr_interface->addr, ETHER_ADDR_LEN);
 }
 
-int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_arp_hdr_t *arp_req_hdr, struct sr_if *sr_interface, uint8_t *packet)
+int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_arp_hdr_t *arp_req_hdr, struct sr_if *out_interface, uint8_t *packet, struct sr_if *in_interface)
 {
 
   printf("Received ARP Request, build arp reply \n");
@@ -124,14 +124,15 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 
   sr_ethernet_hdr_t *old_ethr_hdr = (sr_ethernet_hdr_t *)(packet);
 
-  build_arp_reply_ethernet_hdr(new_ethr_hdr, old_ethr_hdr, sr_interface);
-  build_arp_hdr(new_arp_reply_hdr, arp_req_hdr, sr_interface);
+  build_arp_reply_ethernet_hdr(new_ethr_hdr, old_ethr_hdr, out_interface);
+  build_arp_hdr(new_arp_reply_hdr, arp_req_hdr, out_interface);
 
   print_hdr_eth((uint8_t *)new_ethr_hdr);
 
   print_hdr_arp((uint8_t *)new_arp_reply_hdr);
 
-  sr_send_packet(sr, new_packet_hdr, packet_length, sr_interface->name);
+  check_arp_cache_send_packet(sr, (uint8_t *)new_arp_reply_hdr, packet_length, in_interface, new_arp_reply_hdr->ar_sip);
+  /*sr_send_packet(sr, new_packet_hdr, packet_length, out_interface->name);*/
   free(new_packet_hdr);
   return 1;
 }
@@ -544,7 +545,8 @@ void sr_handlepacket(struct sr_instance *sr,
       else if (ntohs(arp_header->ar_op) == arp_op_request)
       {
         printf("Proessing arp request\n");
-        handle_arp_request(sr, len, arp_header, if_curr, packet);
+        struct sr_if *incoming_interface = sr_get_interface(sr, interface);
+        handle_arp_request(sr, len, arp_header, if_curr, packet, incoming_interface);
       }
     }
     else
