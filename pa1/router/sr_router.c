@@ -119,8 +119,8 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 
   printf("Received ARP Request, build arp reply \n");
   uint8_t *new_packet_hdr = malloc(packet_length);
-  sr_arp_hdr_t *new_arp_reply_hdr = (sr_arp_hdr_t *)(new_packet_hdr + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *new_ethr_hdr = (sr_ethernet_hdr_t *)(new_packet_hdr);
+  sr_arp_hdr_t *new_arp_reply_hdr = (sr_arp_hdr_t *)(new_packet_hdr + sizeof(sr_ethernet_hdr_t));
 
   sr_ethernet_hdr_t *old_ethr_hdr = (sr_ethernet_hdr_t *)(packet);
 
@@ -131,7 +131,7 @@ int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_ar
 
   print_hdr_arp((uint8_t *)new_arp_reply_hdr);
 
-  check_arp_cache_send_packet(sr, (uint8_t *)new_arp_reply_hdr, packet_length, in_interface, new_arp_reply_hdr->ar_tip);
+  check_arp_cache_send_packet(sr, (uint8_t *)new_packet_hdr, packet_length, in_interface, new_arp_reply_hdr->ar_tip);
   /*sr_send_packet(sr, new_packet_hdr, packet_length, out_interface->name);*/
   free(new_packet_hdr);
   return 1;
