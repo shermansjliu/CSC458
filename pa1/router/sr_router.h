@@ -64,10 +64,10 @@ void sr_handlepacket(struct sr_instance* , uint8_t * , unsigned int , char* );
 void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uint8_t *packet, unsigned int packet_length);
 int route_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *router_interface);
 void check_arp_cache_send_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *interface, uint32_t dest_ip);
-void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr);
 void construct_type_3_11_ip_hdr(sr_ip_hdr_t *new_ip_hdr, uint8_t icmp_code, sr_ip_hdr_t *old_ip_hdr, struct sr_instance *sr, struct sr_if *matched_entry_interface);
 void construct_type_3_11_icmp_hdr(sr_icmp_t3_hdr_t *new_icmp_hdr, uint8_t icmp_code, uint8_t icmp_type, sr_ip_hdr_t *sr_ip_hdr);
 void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
+void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 
 /* -- sr_if.c -- */
 void sr_add_interface(struct sr_instance* , const char* );
