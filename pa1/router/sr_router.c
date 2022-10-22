@@ -283,7 +283,7 @@ void check_arp_cache_send_packet(struct sr_instance *sr, uint8_t *packet, unsign
   {
     printf("ARP entry is not cached, so queue arp request \n");
 
-    arp_req = sr_arpcache_queuereq(arp_cache, dest_ip, packet, packet_length, interface->name);
+    arp_req = sr_arpcache_queuereq(&sr->cache, dest_ip, packet, packet_length, interface->name);
     printf("LINE 287 HIT");
     handle_arpreq(arp_req, sr);
   }
