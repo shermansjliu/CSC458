@@ -102,16 +102,16 @@ void build_arp_hdr(sr_arp_hdr_t *new_arp_reply_hdr, sr_arp_hdr_t *arp_request_hd
   new_arp_reply_hdr->ar_sip = sr_interface->ip;
   new_arp_reply_hdr->ar_tip = arp_request_hdr->ar_sip;
 
-  memcpy(new_arp_reply_hdr->ar_tha, arp_request_hdr->ar_sha, ETHER_ADDR_LEN);
-  memcpy(new_arp_reply_hdr->ar_sha, sr_interface->addr, ETHER_ADDR_LEN);
+  memmove(new_arp_reply_hdr->ar_tha, arp_request_hdr->ar_sha, ETHER_ADDR_LEN);
+  memmove(new_arp_reply_hdr->ar_sha, sr_interface->addr, ETHER_ADDR_LEN);
 }
 void build_arp_reply_ethernet_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hdr_t *old_ethernet_hdr, struct sr_if *sr_interface)
 {
   new_ethernet_hdr->ether_type = htons(ethertype_arp);
 
   /*check if using memcopy makes a difference */
-  memcpy(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
-  memcpy(new_ethernet_hdr->ether_shost, sr_interface->addr, ETHER_ADDR_LEN);
+  memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
+  memmove(new_ethernet_hdr->ether_shost, sr_interface->addr, ETHER_ADDR_LEN);
 }
 
 int handle_arp_request(struct sr_instance *sr, unsigned int packet_length, sr_arp_hdr_t *arp_req_hdr, struct sr_if *out_interface, uint8_t *packet, struct sr_if *in_interface)
@@ -158,8 +158,8 @@ int handle_arp_reply(struct sr_instance *sr, uint8_t *packet)
       if (interface)
       {
         ethr_hdr = (sr_ethernet_hdr_t *)(curr_packet->buf);
-        memcpy(ethr_hdr->ether_shost, interface->addr, ETHER_ADDR_LEN);
-        memcpy(ethr_hdr->ether_dhost, arp_rep_hdr->ar_sha, ETHER_ADDR_LEN);
+        memmove(ethr_hdr->ether_shost, interface->addr, ETHER_ADDR_LEN);
+        memmove(ethr_hdr->ether_dhost, arp_rep_hdr->ar_sha, ETHER_ADDR_LEN);
       }
       curr_packet = curr_packet->next;
     }
@@ -295,8 +295,8 @@ void check_arp_cache_send_packet(struct sr_instance *sr, uint8_t *packet, unsign
 
     /* forward packet to next interface*/
     sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)(packet);
-    memcpy(ethernet_hdr->ether_shost, interface->addr, ETHER_ADDR_LEN); /* memcpy is safer than memcopy because memcpy has defined behaviour when src and dst memory overlaps :/// */
-    memcpy(ethernet_hdr->ether_dhost, cached_entry->mac, ETHER_ADDR_LEN);
+    memmove(ethernet_hdr->ether_shost, interface->addr, ETHER_ADDR_LEN); /* memmove is safer than memcopy because memmove has defined behaviour when src and dst memory overlaps :/// */
+    memmove(ethernet_hdr->ether_dhost, cached_entry->mac, ETHER_ADDR_LEN);
 
     /* send packet */
     sr_send_packet(sr, packet, packet_length, interface->name);
@@ -379,7 +379,7 @@ void construct_type_3_11_icmp_hdr(sr_icmp_t3_hdr_t *new_icmp_hdr, uint8_t icmp_c
 {
   new_icmp_hdr->icmp_code = icmp_code;
   new_icmp_hdr->icmp_type = icmp_type;
-  memcpy(new_icmp_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
+  memmove(new_icmp_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
   new_icmp_hdr->unused = 0;
   new_icmp_hdr->next_mtu = 0;
 
@@ -400,11 +400,11 @@ void construct_echo_icmp_hdr(sr_icmp_hdr_t *new_icmp_hdr, uint8_t icmp_code, uin
 void construct_icmp_ethr_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hdr_t *old_ethernet_hdr)
 {
   new_ethernet_hdr->ether_type = htons(ethertype_ip);
-  memcpy(new_ethernet_hdr->ether_shost, old_ethernet_hdr->ether_dhost, ETHER_ADDR_LEN);
-  memcpy(old_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
+  memmove(new_ethernet_hdr->ether_shost, old_ethernet_hdr->ether_dhost, ETHER_ADDR_LEN);
+  memmove(old_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
   /*
-  memcpy(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
-    memcpy(new_ethernet_hdr->ether_shost, matched_entry_interface->addr, ETHER_ADDR_LEN);
+  memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
+    memmove(new_ethernet_hdr->ether_shost, matched_entry_interface->addr, ETHER_ADDR_LEN);
     */
   /* TODO what to set this as??*/
 }
