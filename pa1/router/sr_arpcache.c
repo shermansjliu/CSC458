@@ -21,7 +21,7 @@ void create_arp_request_packet(struct sr_arp_hdr *new_arp_hdr, struct sr_arpreq 
     new_arp_hdr->ar_hln = ETHER_ADDR_LEN;                             /* Ethernet protocol length */
     new_arp_hdr->ar_pln = sizeof(uint32_t);                           /* IPv4 protocol length */
     new_arp_hdr->ar_op = htons(arp_op_request);                       /* Should be 1 here */
-    memmove(new_arp_hdr->ar_sha, sif->addr, ETHER_ADDR_LEN); /* Use Interface Address */
+    memcpy(new_arp_hdr->ar_sha, sif->addr, ETHER_ADDR_LEN); /* Use Interface Address */
     new_arp_hdr->ar_sip = sif->ip;                                                   /* Sender IP from Interface */
     new_arp_hdr->ar_tip = arpr->ip;                                                  /* Target IP from Request */
     memset(new_arp_hdr->ar_tha, 0x00, ETHER_ADDR_LEN);                               /* set to 0 to be safe https://piazza.com/class/l5gx8w2al3g4zh/post/207*/
@@ -76,8 +76,8 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             create_arp_request_packet(arp_hdr, arpr, sr, sif);
             
             /*Create ethernet hdr*/
-            memmove(eth_hdr->ether_shost, sif->addr, ETHER_ADDR_LEN);      /* Source address same*/
-            memmove(eth_hdr->ether_dhost, broadcast_addr, ETHER_ADDR_LEN); /* Dest Address will be broadcast*/
+            memcpy(eth_hdr->ether_shost, sif->addr, ETHER_ADDR_LEN);      /* Source address same*/
+            memcpy(eth_hdr->ether_dhost, broadcast_addr, ETHER_ADDR_LEN); /* Dest Address will be broadcast*/
             eth_hdr->ether_type = htons(ethertype_arp);
 
             print_hdr_eth((uint8_t *)eth_hdr);
@@ -187,10 +187,10 @@ struct sr_arpreq *sr_arpcache_queuereq(struct sr_arpcache *cache,
     /* Add the packet to the list of packets for this request */
     if (packet && packet_len && iface)
     {
-        printf("Arp Cache line 190 \n");
+        printf("Arp Cache line 190 \n"); /* this line is run */
         struct sr_packet *new_pkt = (struct sr_packet *)malloc(sizeof(struct sr_packet));
 
-        printf("Arp Cache line 192 \n");
+        printf("Arp Cache line 192 \n"); /* this line is not run */
         new_pkt->buf = (uint8_t *)malloc(packet_len);
         memcpy(new_pkt->buf, packet, packet_len);
         new_pkt->len = packet_len;
