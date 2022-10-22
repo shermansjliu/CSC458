@@ -114,6 +114,30 @@ void build_arp_reply_ethernet_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethern
   memmove(new_ethernet_hdr->ether_shost, sr_interface->addr, ETHER_ADDR_LEN);
 }
 
+void handle_arp_reply(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
+{
+   sr_arp_hdr_t *arp_rep_hdr = (sr_arp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+   struct sr_arpreq *ip_in_queue = sr_arpcache_insert(&sr->cache, arp_rep_hdr->ar_sha, arp_rep_hdr->ar_sip);
+
+   if (ip_in_queue == NULL) {
+      return;
+   }
+   
+   struct sr_packet *curr_packet = ip_in_queue->packets;
+   while(curr_packet) {
+    struct sr_if * pkt_interface = sr_get_interface(sr, curr_packet->iface);
+    if (interface) {
+      /* update eth hdr*/
+        sr_ethernet_hdr_t *pkt_eth_hdr = (sr_ethernet_hdr_t *)(curr_packet->buf);
+        memcpy(pkt_eth_hdr->ether_shost, pkt_interface->addr, ETHER_ADDR_LEN);
+        memcpy(pkt_eth_hdr->ether_dhost, arp_rep_hdr->ar_sha, ETHER_ADDR_LEN);
+    }
+    curr_packet = curr_packet->next;
+   sr_send_packet(sr, curr_packet->buf, curr_packet->len, curr_packet->iface);
+   }
+    sr_arpreq_destroy(&sr->cache, ip_in_queue);
+}
+
 void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
   /* Add error check */
@@ -124,6 +148,7 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
   {
     if (ntohs(arp_req_hdr->ar_op) == arp_op_reply)
     {
+      handle_arp_reply(sr, packet, length, interface);
     }
     else if (ntohs(arp_req_hdr->ar_op) == arp_op_request)
     {
@@ -161,36 +186,7 @@ void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length
   free(new_hdr);
 }
 
-int handle_arp_reply(struct sr_instance *sr, uint8_t *packet)
-{
 
-  printf("Received ARP Reply");
-  /*
-  Empty out packets in queue
-  */
-  sr_arp_hdr_t *arp_rep_hdr = (sr_arp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-  struct sr_arpreq *is_queued = sr_arpcache_insert(&sr->cache, arp_rep_hdr->ar_sha, arp_rep_hdr->ar_sip);
-  struct sr_packet *curr_packet;
-  struct sr_if *interface;
-  sr_ethernet_hdr_t *ethr_hdr;
-  if (is_queued)
-  {
-    curr_packet = is_queued->packets;
-    while (curr_packet)
-    {
-      interface = sr_get_interface(sr, curr_packet->iface);
-      if (interface)
-      {
-        ethr_hdr = (sr_ethernet_hdr_t *)(curr_packet->buf);
-        memmove(ethr_hdr->ether_shost, interface->addr, ETHER_ADDR_LEN);
-        memmove(ethr_hdr->ether_dhost, arp_rep_hdr->ar_sha, ETHER_ADDR_LEN);
-      }
-      curr_packet = curr_packet->next;
-    }
-    sr_arpreq_destroy(&sr->cache, is_queued);
-  }
-  return 1;
-}
 /*
 void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char* interface, ) 
 {
@@ -347,10 +343,13 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
     bool is_forward_packet_succesful = forward_packet(sr, packet, packet_length, interface);
     if (is_forward_packet_succesful)
     {
-      printf("did not successfully forward packet\n");
+      printf("Successfully forwarded packet\n");
       return 0;
     }
-    printf("Successfully forwarded packet\n");
+    else 
+    {
+      printf("Did not successfuly forward packet\n");
+    }
   }
   return 1;
 }
