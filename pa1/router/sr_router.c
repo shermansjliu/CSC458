@@ -455,8 +455,8 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
 
     print_hdr_eth((uint8_t *)new_ethernet_hdr);
     print_hdr_ip((uint8_t *)new_ip_hdr);
-    /*print_hdr_icmp((uint8_t *)new_icmp_t3_hdr);*/
-     
+    print_hdr_icmp((uint8_t *)new_icmp_t3_hdr);
+
 
     handle_ttl(new_ip_hdr, new_packet, new_packet_length, sr); /*Is this line even necessary?*/
     check_arp_cache_send_packet(sr, new_packet, new_packet_length, matched_entry_interface, potential_matched_entry->gw.s_addr);
