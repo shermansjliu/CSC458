@@ -262,6 +262,7 @@ void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length
   {
     printf("IP Packet Time Limit Exceeded \n");
     send_icmp(sr, 11, 0, packet, packet_length);
+    printf("LINE 265 BITCHES");
     return;
   }
 
@@ -512,7 +513,7 @@ void sr_handlepacket(struct sr_instance *sr,
   {
     printf("This is an IP Packet \n");
     sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-    print_hdr_ip(packet + sizeof(sr_ethernet_hdr_t));
+    print_hdr_ip((uint8_t *)ip_header);
     handle_ip_packet(sr, ip_header, packet, len, interface);
   }
   else if (ethertype(packet) == ethertype_arp)
