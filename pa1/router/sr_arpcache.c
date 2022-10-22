@@ -84,7 +84,6 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             print_hdr_arp((uint8_t *)arp_hdr);
 
             int res = sr_send_packet(sr, buf, total_size, sif->name);
-            free(buf);
             if (res != 0)
             {
                 printf("Error: ARP request not sent successfully.\n");
@@ -94,7 +93,8 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
             arpr->sent = current_time;
             arpr->times_sent++;
 
-            /* Free Malloced data*/
+            free(buf);
+            printf("Malloced arp reply was freed \n");
         }
     }
 }
@@ -187,8 +187,10 @@ struct sr_arpreq *sr_arpcache_queuereq(struct sr_arpcache *cache,
     /* Add the packet to the list of packets for this request */
     if (packet && packet_len && iface)
     {
+        printf("Arp Cache line 190 \n");
         struct sr_packet *new_pkt = (struct sr_packet *)malloc(sizeof(struct sr_packet));
 
+        printf("Arp Cache line 192 \n");
         new_pkt->buf = (uint8_t *)malloc(packet_len);
         memcpy(new_pkt->buf, packet, packet_len);
         new_pkt->len = packet_len;
