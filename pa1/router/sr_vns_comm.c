@@ -578,8 +578,9 @@ int sr_send_packet(struct sr_instance* sr /* borrowed */,
         return -1;
     }
 
-    printf("sr_send_packet before freeing is hit!\n");
+    printf("BEFORE sr_pkt is freed!\n");
     free(sr_pkt);
+    printf("AFTER sr_pkt is freed!\n");
 
     return 0;
 } /* -- sr_send_packet -- */
