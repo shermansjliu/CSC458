@@ -333,7 +333,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
     {
       printf("IP Packet Time Limit Exceeded \n");
       
-      /* TODOsend_icmp(sr, 11, 0, packet, packet_length);*/
+      send_icmp(sr, 11, 0, packet, packet_length);
       return 0;
     }
 
