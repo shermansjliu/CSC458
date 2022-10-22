@@ -191,7 +191,10 @@ int handle_arp_reply(struct sr_instance *sr, uint8_t *packet)
   }
   return 1;
 }
-
+void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char* interface, ) 
+{
+  if 
+}
 int handle_icmp_ip(struct sr_instance *sr, unsigned int icmp_ip_packet_length, uint8_t *icmp_packet)
 {
   if (!is_valid_icmp_ip(icmp_ip_packet_length, icmp_packet))
@@ -607,12 +610,12 @@ void sr_handlepacket(struct sr_instance *sr,
   }
 
   /* ip packet */
-  if (ethertype(packet) == htons(ethertype_ip))
+  if (ethertype(packet) == ethertype_ip)
   {
     printf("This is an IP Packet \n");
     handle_ip_packet(sr, packet, len, interface);
   }
-  else if (ethertype(packet) == htons(ethertype_arp))
+  else if (ethertype(packet) == ethertype_arp)
   {
     printf("This is an ARP Packet \n");
     handle_arp_packet(sr, packet, len, interface);
