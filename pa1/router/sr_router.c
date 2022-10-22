@@ -132,9 +132,9 @@ void handle_arp_reply(struct sr_instance *sr, uint8_t *packet, unsigned int leng
         sr_ethernet_hdr_t *pkt_eth_hdr = (sr_ethernet_hdr_t *)(curr_packet->buf);
         memcpy(pkt_eth_hdr->ether_shost, pkt_interface->addr, ETHER_ADDR_LEN);
         memcpy(pkt_eth_hdr->ether_dhost, arp_rep_hdr->ar_sha, ETHER_ADDR_LEN);
+        sr_send_packet(sr, curr_packet->buf, curr_packet->len, curr_packet->iface);
     }
     curr_packet = curr_packet->next;
-   sr_send_packet(sr, curr_packet->buf, curr_packet->len, curr_packet->iface);
    }
   sr_arpreq_destroy(&(sr->cache), ip_in_queue);
 }
