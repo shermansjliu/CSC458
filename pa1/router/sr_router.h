@@ -68,7 +68,7 @@ void construct_type_3_11_ip_hdr(sr_ip_hdr_t *new_ip_hdr, uint8_t icmp_code, sr_i
 void construct_type_3_11_icmp_hdr(sr_icmp_t3_hdr_t *new_icmp_hdr, uint8_t icmp_code, uint8_t icmp_type, sr_ip_hdr_t *sr_ip_hdr);
 void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
-
+void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 /* -- sr_if.c -- */
 void sr_add_interface(struct sr_instance* , const char* );
 void sr_set_ether_ip(struct sr_instance* , uint32_t );
