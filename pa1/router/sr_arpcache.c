@@ -187,9 +187,9 @@ struct sr_arpreq *sr_arpcache_queuereq(struct sr_arpcache *cache,
     /* Add the packet to the list of packets for this request */
     if (packet && packet_len && iface)
     {
-        printf(" Add the packet to the list of packets for this request\n");
         struct sr_packet *new_pkt = (struct sr_packet *)malloc(sizeof(struct sr_packet));
 
+        printf("Arp Cache line 192 \n");
         new_pkt->buf = (uint8_t *)malloc(packet_len);
         memcpy(new_pkt->buf, packet, packet_len);
         new_pkt->len = packet_len;
