@@ -191,10 +191,11 @@ int handle_arp_reply(struct sr_instance *sr, uint8_t *packet)
   }
   return 1;
 }
+/*
 void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char* interface, ) 
 {
   if 
-}
+}*/
 int handle_icmp_ip(struct sr_instance *sr, unsigned int icmp_ip_packet_length, uint8_t *icmp_packet)
 {
   if (!is_valid_icmp_ip(icmp_ip_packet_length, icmp_packet))
