@@ -116,6 +116,7 @@ void build_arp_reply_ethernet_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethern
 
 void handle_arp_reply(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
+   printf("Handling ARP Reply\n");
    sr_arp_hdr_t *arp_rep_hdr = (sr_arp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
    struct sr_arpreq *ip_in_queue = sr_arpcache_insert(&sr->cache, arp_rep_hdr->ar_sha, arp_rep_hdr->ar_sip);
 
@@ -135,7 +136,7 @@ void handle_arp_reply(struct sr_instance *sr, uint8_t *packet, unsigned int leng
     curr_packet = curr_packet->next;
    sr_send_packet(sr, curr_packet->buf, curr_packet->len, curr_packet->iface);
    }
-    sr_arpreq_destroy(&sr->cache, ip_in_queue);
+  sr_arpreq_destroy(&(sr->cache), ip_in_queue);
 }
 
 void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
