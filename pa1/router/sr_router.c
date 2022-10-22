@@ -514,12 +514,17 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
 
   /* build ip hdr*/
+  new_ip_hdr->ip_v = 4;
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
   new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
   new_ip_hdr->ip_id = 0;
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
+  new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
+  new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
+  new_ip_hdr->ip_sum = 0;
+  new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
 
   /* build icmp hdr */
   new_icmp_t3_hdr->icmp_code = 11;
