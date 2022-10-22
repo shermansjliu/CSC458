@@ -321,6 +321,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
     printf("Forward packet \n");
     /* Handle TTL */
     ip_hdr->ip_ttl--;
+    print_hdrs(packet, packet_length);
 
     if (ip_hdr->ip_ttl == 0)
     {
