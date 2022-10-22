@@ -122,10 +122,10 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
 
   if (sr_if)
   {
-    if (arp_req_hdr->ar_op == htons(arp_op_reply))
+    if (ntohs(arp_req_hdr->ar_op) == arp_op_reply)
     {
     }
-    else if (arp_req_hdr->ar_op == htons(arp_op_request))
+    else if (ntohs(arp_req_hdr->ar_op) == arp_op_request)
     {
       handle_arp_req(sr, packet, length, interface);
     }
@@ -160,7 +160,6 @@ void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length
   sr_send_packet(sr, new_hdr, length, interface);
   free(new_hdr);
 }
-
 
 int handle_arp_reply(struct sr_instance *sr, uint8_t *packet)
 {
@@ -213,44 +212,103 @@ int handle_icmp_ip(struct sr_instance *sr, unsigned int icmp_ip_packet_length, u
   }
   return 0;
 }
+
+sr_ip_hdr_t *get_ip_hdr(uint8_t *packet){
+  return (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+  
+}
+bool forward_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, char *interface) {
+  sr_ip_hdr_t *ip_hdr = get_ip_hdr(packet);
+  struct sr_rt *rt_entry;
+  rt_entry = get_longest_matched_prefix(ip_hdr->ip_dst, sr);
+
+  if (rt_entry == NULL)
+  {
+    /*
+    type: 3
+    code: 0
+    Sent if there is a non-existent route to the destination IP (no matching entry in the routing table when forwarding an IP packet).
+    */
+    printf("IP does not exist in routing table \n");
+    send_icmp(sr, 3, 0, packet, packet_length);
+    return false;
+  }
+
+  /*
+  If destination interface exists, check our arp cache
+  if it's inside the arpcache, send it
+  if it's not, send arp req
+  */
+  struct sr_if *outgoing_interface = sr_get_interface(sr, rt_entry->interface);
+  struct sr_arpentry *arp_cached_entry; 
+  struct sr_arpreq *arp_req;
+  
+  arp_cached_entry = sr_arpcache_lookup(&(sr->cache), rt_entry->gw.s_addr);
+  
+  if (arp_cached_entry == NULL) 
+  {
+    printf("ARP entry is not cached, so queue arp request \n");
+    printf("Interface name %s \n", outgoing_interface->name);
+    arp_req = sr_arpcache_queuereq(&(sr->cache), rt_entry->gw.s_addr, packet, packet_length, rt_entry->interface);
+    handle_arpreq(arp_req, sr);
+  }
+  else 
+  {
+     printf("ARP entry is cached \n");
+
+    /* forward packet to next destination, update ethernet hdr*/
+    sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)(packet);
+    memcpy(ethernet_hdr->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
+    memcpy(ethernet_hdr->ether_dhost, arp_cached_entry->mac, ETHER_ADDR_LEN);
+
+    /* send packet */
+    sr_send_packet(sr, packet, packet_length, rt_entry->interface);
+
+    /* freeing this based on sr_arpcache_lookup implementation */
+    free(arp_cached_entry);
+  } 
+  /*check_arp_cache_send_packet(sr, packet, packet_length, outgoing_interface, ip_hdr->ip_dst);*/
+
+  return true;
+}
 /* Need to pass in packet and packet_length in case ip packet is an icmp ip packet */
-int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *packet, unsigned int packet_length, char *interface_name)
+int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, char *interface)
 {
 
+  printf("=====Handling IP Packet====\n");
   /*validate checksum*/
-  int ip_header_cksum = ip_header->ip_sum;
-  ip_header->ip_sum = 0;
-
-  if (ip_header_cksum != cksum(ip_header, sizeof(sr_ip_hdr_t)))
+  sr_ip_hdr_t *ip_hdr = get_ip_hdr(packet);
+  int curr_cksum = ip_hdr->ip_sum;
+  ip_hdr->ip_sum = 0;
+  if (curr_cksum != cksum(ip_hdr, sizeof(sr_ip_hdr_t)))
   {
     printf("ip packet has incorrect check sum \n");
     return 0;
   }
 
-  /* Find destination interface of the packet */
-  struct sr_if *sr_interface = sr_get_interface(sr, interface_name);
-  struct sr_if *if_curr = sr->if_list;
-  int is_destined_for_router = 0;
-  while (if_curr)
+  /*Traverse router's interface list*/
+  struct sr_if *curr_if = sr->if_list;
+  bool is_destined_for_router = false;
+
+  while (curr_if)
   {
-    if (if_curr->ip == ip_header->ip_dst)
+    if (curr_if->ip == ip_hdr->ip_dst)
     {
-      is_destined_for_router = 1;
+      is_destined_for_router = true;
       break;
     }
-    if_curr = if_curr->next;
+    curr_if = curr_if->next;
   }
 
   if (is_destined_for_router)
   {
     printf("PACKET IS DESTINED FOR ROUTER \n");
-    printf("=====Handling IP Packet====\n");
-    if (ip_header->ip_p == ip_protocol_icmp)
+
+    if (ip_hdr->ip_p == ip_protocol_icmp)
     {
       printf("\n IP PACKET IS AN ICMP MESSAGE \n");
       handle_icmp_ip(sr, packet_length, packet);
     }
-
     else
     {
       printf("IP Packet is a TCP/UDP MESSAGE\n");
@@ -266,20 +324,33 @@ int handle_ip_packet(struct sr_instance *sr, sr_ip_hdr_t *ip_header, uint8_t *pa
 
   else
   {
-    printf("Packet is destined somewhere else \n");
+    printf("Forward packet \n");
     /* Handle TTL */
-    handle_ttl(ip_header, packet, packet_length, sr);
-    int route_ip_packet_res = route_ip_packet(sr, packet, packet_length, sr_interface);
-    if (!route_ip_packet_res)
+    ip_hdr->ip_ttl--;
+
+    if (ip_hdr->ip_ttl == 0)
+    {
+      printf("IP Packet Time Limit Exceeded \n");
+      
+      /* TODOsend_icmp(sr, 11, 0, packet, packet_length);*/
+      return 0;
+    }
+
+    /* Recompute modified check sum */
+    ip_hdr->ip_sum = 0;
+    ip_hdr->ip_sum = cksum(ip_hdr, sizeof(sr_ip_hdr_t));
+
+    bool is_forward_packet_succesful = forward_packet(sr, packet, packet_length, interface);
+    if (is_forward_packet_succesful)
     {
       printf("did not successfully forward packet\n");
       return 0;
     }
     printf("Successfully forwarded packet\n");
-    return 1;
   }
   return 1;
 }
+
 void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length, struct sr_instance *sr)
 {
   ip_hdr->ip_ttl--;
@@ -287,7 +358,6 @@ void handle_ttl(sr_ip_hdr_t *ip_hdr, uint8_t *packet, unsigned int packet_length
   {
     printf("IP Packet Time Limit Exceeded \n");
     send_icmp(sr, 11, 0, packet, packet_length);
-    printf("LINE 265 BITCHES");
     return;
   }
 
@@ -511,7 +581,7 @@ void send_icmp(struct sr_instance *sr, uint8_t icmp_type, uint8_t icmp_code, uin
     construct_icmp_ethr_hdr(new_ethernet_hdr, old_ethernet_hdr);
 
     printf("Forward IP Packet");
-    handle_ttl(new_ip_hdr, echo_packet, packet_length, sr);
+    handle_ttl(new_ip_hdr, echo_packet, packet_length, sr); /*IS this line necessary?*/
     /* route_ip_packet(sr, echo_packet, packet_length, matched_entry_interface);*/
     check_arp_cache_send_packet(sr, echo_packet, packet_length, matched_entry_interface, potential_matched_entry->gw.s_addr);
     free(echo_packet);
@@ -540,8 +610,7 @@ void sr_handlepacket(struct sr_instance *sr,
   if (ethertype(packet) == htons(ethertype_ip))
   {
     printf("This is an IP Packet \n");
-    sr_ip_hdr_t *ip_header = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-    handle_ip_packet(sr, ip_header, packet, len, interface);
+    handle_ip_packet(sr, packet, len, interface);
   }
   else if (ethertype(packet) == htons(ethertype_arp))
   {
