@@ -325,7 +325,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
 
     if (ip_hdr->ip_ttl == 0)
     {
-      printf("IP Packet Time Limit Exceeded \n");
+      printf("Send ICMP type 11 message \n");
 
       send_icmp_time_limit_exceeded(sr, packet, packet_length, interface);
       return 0;
@@ -512,6 +512,8 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   print_hdrs(new_pkt, length);
   sr_send_packet(sr, new_pkt, length, interface);
 }
+
+
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
 
