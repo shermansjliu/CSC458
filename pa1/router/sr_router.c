@@ -118,7 +118,7 @@ void handle_arp_reply(struct sr_instance *sr, uint8_t *packet, unsigned int leng
 {
    printf("Handling ARP Reply\n");
    sr_arp_hdr_t *arp_rep_hdr = (sr_arp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
-   struct sr_arpreq *ip_in_queue = sr_arpcache_insert(&sr->cache, arp_rep_hdr->ar_sha, arp_rep_hdr->ar_sip);
+   struct sr_arpreq *ip_in_queue = sr_arpcache_insert(&(sr->cache), arp_rep_hdr->ar_sha, arp_rep_hdr->ar_sip);
 
    if (ip_in_queue == NULL) {
       return;
