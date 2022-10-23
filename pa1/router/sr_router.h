@@ -66,6 +66,7 @@ void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code);
+void send_icmp_host_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code);
 int is_ethernet_packet_too_short(unsigned int packet_length);
 int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, char *interface);
 void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);

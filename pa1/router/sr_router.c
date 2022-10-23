@@ -284,9 +284,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
       {
         send_icmp_echo(sr, packet, packet_length, interface);
         return 1;
-      } else {
-        send_icmp_host_unreachable(sr, packet, packet_length, interface, 1);
-      }
+      } 
       return 0;
     }
     else
