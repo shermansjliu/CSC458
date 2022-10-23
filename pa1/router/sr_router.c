@@ -166,7 +166,8 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
       handle_arp_req(sr, packet, length, interface);
     }
   }
-  else {
+  else
+  {
     printf("ARP packet error\n");
   }
 }
@@ -206,40 +207,17 @@ sr_ip_hdr_t *get_ip_hdr(uint8_t *packet)
   return (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 }
 
-bool forward_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, char *interface_name)
+bool forward_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *out_interface, uint32_t dest_ip)
 {
-  sr_ip_hdr_t *ip_hdr = get_ip_hdr(packet);
-  struct sr_rt *rt_entry;
-  rt_entry = get_longest_matched_prefix(ip_hdr->ip_dst, sr);
-
-  if (rt_entry == NULL)
-  {
-    /*
-    type: 3
-    code: 0
-    Sent if there is a non-existent route to the destination IP (no matching entry in the routing table when forwarding an IP packet).
-    */
-    printf("IP does not exist in routing table \n");
-    send_icmp_unreachable(sr, packet, packet_length, interface_name, 0);
-    return false;
-  }
-
-  /*
-  If destination interface exists, check our arp cache
-  if it's inside the arpcache, send it
-  if it's not, send arp req
-  */
-  struct sr_if *outgoing_interface = sr_get_interface(sr, rt_entry->interface);
   struct sr_arpentry *arp_cached_entry;
   struct sr_arpreq *arp_req;
-
-  arp_cached_entry = sr_arpcache_lookup(&(sr->cache), rt_entry->gw.s_addr);
+  arp_cached_entry = sr_arpcache_lookup(&(sr->cache), dest_ip);
 
   if (arp_cached_entry == NULL)
   {
     printf("ARP entry is not cached, so queue arp request \n");
-    printf("Interface name %s \n", outgoing_interface->name);
-    arp_req = sr_arpcache_queuereq(&(sr->cache), rt_entry->gw.s_addr, packet, packet_length, rt_entry->interface);
+    printf("Interface name %s \n", out_interface->name);
+    arp_req = sr_arpcache_queuereq(&(sr->cache), dest_ip, packet, packet_length, out_interface->name);
     handle_arpreq(arp_req, sr);
   }
   else
@@ -248,11 +226,11 @@ bool forward_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet
 
     /* forward packet to next destination, update ethernet hdr*/
     sr_ethernet_hdr_t *ethernet_hdr = (sr_ethernet_hdr_t *)(packet);
-    memcpy(ethernet_hdr->ether_shost, outgoing_interface->addr, ETHER_ADDR_LEN);
+    memcpy(ethernet_hdr->ether_shost, out_interface->addr, ETHER_ADDR_LEN);
     memcpy(ethernet_hdr->ether_dhost, arp_cached_entry->mac, ETHER_ADDR_LEN);
 
     /* send packet */
-    sr_send_packet(sr, packet, packet_length, rt_entry->interface);
+    sr_send_packet(sr, packet, packet_length, out_interface->name);
 
     /* freeing this based on sr_arpcache_lookup implementation */
     free(arp_cached_entry);
@@ -341,7 +319,25 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
     ip_hdr->ip_sum = 0;
     ip_hdr->ip_sum = cksum(ip_hdr, sizeof(sr_ip_hdr_t));
 
-    bool is_forward_packet_succesful = forward_packet(sr, packet, packet_length, interface);
+    sr_ip_hdr_t *ip_hdr = get_ip_hdr(packet);
+    struct sr_rt *rt_entry;
+    rt_entry = get_longest_matched_prefix(ip_hdr->ip_dst, sr);
+
+    if (rt_entry == NULL)
+    {
+      /*
+      type: 3
+      code: 0
+      Sent if there is a non-existent route to the destination IP (no matching entry in the routing table when forwarding an IP packet).
+      */
+      printf("IP does not exist in routing table \n");
+      send_icmp_unreachable(sr, packet, packet_length, interface, 0);
+      return false;
+    }
+
+    struct sr_if *outgoing_interface = sr_get_interface(sr, rt_entry->interface);
+    printf("Outgoing interface->ip %d, rt_entry->gateway.sddr %d \n", ntohs(outgoing_interface->ip), ntohs(rt_entry->gw.s_addr));
+    bool is_forward_packet_succesful = forward_packet(sr, packet, packet_length, outgoing_interface, outgoing_interface->ip);
     if (is_forward_packet_succesful)
     {
       printf("Successfully forwarded packet\n");
@@ -405,9 +401,15 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 {
   printf("Sending ICMP Echo packet\n");
 
+
   uint8_t *new_pkt = malloc(length);
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
+  sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *new_eth_hdr = (sr_ethernet_hdr_t *)(new_pkt);
+
+  struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
+  struct sr_if *out_interface = sr_get_interface(sr, rt_entry->interface);
+  printf("old_hdr_ip->ip_dst %d, interface ip %d \n", ntohs(old_ip_hdr->ip_dst), ntohs(out_interface->ip));
   /* set eth hdr*/
   new_eth_hdr->ether_type = htons(ethertype_ip);
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
@@ -420,7 +422,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 
   print_hdrs(new_pkt, length);
   /*Outgoing interface is also the incoming interface since we want to send it back to the host that echoed*/
-  forward_packet(sr, new_pkt, length, interface);
+  forward_packet(sr, new_pkt, length, out_interface, rt_entry->gw.s_addr);
   /*sr_send_packet(sr, new_pkt, length, interface);*/
 }
 
@@ -463,15 +465,16 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   new_icmp_t3_hdr->icmp_sum = 0;
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
-
   print_hdrs(new_pkt, new_pkt_length);
   if (code != 3)
   {
     /*Send to router need to get the interface that it's received from*/
     struct sr_if *if_curr = sr->if_list;
-    while (if_curr) {
-      if (if_curr->ip == old_ip_hdr->ip_src){
-          break; 
+    while (if_curr)
+    {
+      if (if_curr->ip == old_ip_hdr->ip_src)
+      {
+        break;
       }
       if_curr = if_curr->next;
     }
@@ -490,7 +493,7 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
 
     But the destination interface of the send icmp unreachable methods (type 3, code 1) is the coming interface, this handles that edge case
     */
-    forward_packet(sr, new_pkt, new_pkt_length, rt_entry->interface); /* TODO verify rt_entry-> interface is an array? Will there be memory issues*/
+    /*TODO forward_packet(sr, new_pkt, new_pkt_length, rt_entry->interface); /* TODO verify rt_entry-> interface is an array? Will there be memory issues*/
     return;
   }
   /*
@@ -499,14 +502,12 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
 
   Because the new ip_dst is the old ip_src, passing in the incoming interface and not changing it is fine
 
-  */
-  forward_packet(sr, new_pkt, new_pkt_length, interface);
+  
+  /*TODO forward_packet(sr, new_pkt, new_pkt_length, interface);*/
 }
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
 
-
- 
   printf("TTL ICMP packet\n");
   printf("incoming interface %s \n", interface);
 
@@ -518,8 +519,6 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   sr_ethernet_hdr_t *new_eth_hdr = (sr_ethernet_hdr_t *)(new_pkt);
   sr_ip_hdr_t *new_ip_hdr = (sr_ip_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-
-
 
   /* build eth hdr */
   new_eth_hdr->ether_type = htons(ethertype_ip);
@@ -534,12 +533,12 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   new_ip_hdr->ip_id = htons(0);
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
-  
+
   /* set ip src*/
-  struct sr_rt* rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
+  struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
   struct sr_if *sr_if = sr_get_interface(sr, rt_entry->interface);
-  
-  printf("old_hdr_ip->ip_dst %d, interface ip %d \n", old_ip_hdr->ip_dst, sr_if->ip);
+
+  printf("old_hdr_ip->ip_dst %d, interface ip %d, gateway s_addr %d \n", ntohs(old_ip_hdr->ip_dst), ntohs(sr_if->ip), ntohs(rt_entry->gw.s_addr));
   new_ip_hdr->ip_src = sr_if->ip;
   new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
   new_ip_hdr->ip_sum = 0;
@@ -558,6 +557,6 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   printf("========Built ICMP Type 11 MSG====== \n");
   print_hdrs(new_pkt, new_pkt_length);
 
-  forward_packet(sr, new_pkt, new_pkt_length, interface);
+  forward_packet(sr, new_pkt, new_pkt_length, sr_if, rt_entry->gw.s_addr);
   free(new_pkt);
 }
