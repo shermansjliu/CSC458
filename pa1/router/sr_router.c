@@ -422,6 +422,8 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_ip_hdr->ip_id = htons(0);
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
+  new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
+  new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
 
   /* set icmp hdr */
   sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
