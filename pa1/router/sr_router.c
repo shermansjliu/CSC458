@@ -508,7 +508,7 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
 
  
   printf("TTL ICMP packet\n");
-  printf("incoming interface %c \n", interface);
+  printf("incoming interface %s \n", interface);
 
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
