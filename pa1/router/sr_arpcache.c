@@ -114,7 +114,7 @@ void sr_arpcache_sweepreqs(struct sr_instance *sr)
     {
         curr_next = curr->next;
         handle_arpreq(curr, sr);
-        curr = curr->next;
+        curr = curr_next;
     }
 
     /* If this request is the sixth attempt, send host unreachable to all trying to contact this one*/
