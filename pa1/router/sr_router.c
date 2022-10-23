@@ -284,6 +284,8 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
       {
         send_icmp_echo(sr, packet, packet_length, interface);
         return 1;
+      } else {
+        send_icmp_host_unreachable(sr, packet, packet_length, interface, 1);
       }
       return 0;
     }
@@ -416,6 +418,8 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 
   memcpy(new_ip_hdr, old_ip_hdr, sizeof(sr_ip_hdr_t));
 
+  new_ip_hdr->ip_v = 4;
+  new_ip_hdr->ip_hl = 5;
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
   new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
@@ -431,11 +435,82 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_sum = 0;
-  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, length - sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
+  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
 
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
   forward_packet(sr, new_pkt, length, out_interface, rt_entry->gw.s_addr);
+}
+
+/**
+ * Type 3 Code 1
+*/
+
+void send_icmp_host_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code)
+{
+
+  printf("Send ICMP unreachable type: %d, code: %d\n", 3, code);
+  sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
+  sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+
+  unsigned int new_pkt_length = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
+  uint8_t *new_pkt = malloc(new_pkt_length);
+  sr_ethernet_hdr_t *new_eth_hdr = (sr_ethernet_hdr_t *)(new_pkt);
+  sr_ip_hdr_t *new_ip_hdr = (sr_ip_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t));
+  sr_icmp_t3_hdr_t *new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+  /* build eth hdr */
+  new_eth_hdr->ether_type = htons(ethertype_ip);
+  memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
+  memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
+
+  memcpy(new_ip_hdr, old_ip_hdr, sizeof(sr_ip_hdr_t));
+
+  /*build ip hdr*/
+  new_ip_hdr->ip_v = 4;
+  new_ip_hdr->ip_hl = 5;
+  new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
+  new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
+  new_ip_hdr->ip_tos = 0;
+  new_ip_hdr->ip_id = htons(0);
+  new_ip_hdr->ip_off = htons(IP_DF);
+  new_ip_hdr->ip_p = ip_protocol_icmp;
+  new_ip_hdr->ip_src = sr_get_interface(sr, interface)->ip;
+  new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
+
+
+  /*build icmp t3 hdr*/
+  new_icmp_t3_hdr->icmp_type = 3;
+  new_icmp_t3_hdr->icmp_code = code;
+
+  memcpy(new_icmp_t3_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
+  new_icmp_t3_hdr->unused = 0;
+  new_icmp_t3_hdr->next_mtu = 1500;
+  new_icmp_t3_hdr->icmp_sum = 0;
+  new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
+
+  print_hdrs(new_pkt, new_pkt_length);
+  new_ip_hdr->ip_sum = 0;
+  new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
+
+  struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
+  struct sr_if *out_if = sr_get_interface(sr, rt_entry->interface);
+
+  /*
+  When code == 1, we pass in the outgoing interface
+
+  But the destination interface of the send icmp unreachable methods (type 3, code 1) is the coming interface, this handles that edge case
+  */
+  
+  forward_packet(sr, new_pkt, new_pkt_length, out_if, rt_entry->gw.s_addr);
+  return;
+  /*
+  The interface variable is the name if the incoming interface
+  Forward IP expects the interface to be the name of the destination interface
+
+  Because the new ip_dst is the old ip_src, passing in the incoming interface and not changing it is fine*/
+
+
 }
 
 /**
@@ -464,6 +539,7 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
 
   /*build ip hdr*/
   new_ip_hdr->ip_v = 4;
+  new_ip_hdr->ip_hl = 5;
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
   new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
@@ -535,6 +611,7 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
 
   /* build ip hdr*/
   new_ip_hdr->ip_v = 4;
+  new_ip_hdr->ip_hl = 5;
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
   new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
