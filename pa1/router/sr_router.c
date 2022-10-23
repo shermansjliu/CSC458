@@ -404,6 +404,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *new_eth_hdr = (sr_ethernet_hdr_t *)(new_pkt);
+  sr_ip_hdr_t *new_ip_hdr = (sr_ip_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t));
 
   struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
   struct sr_if *out_interface = sr_get_interface(sr, rt_entry->interface);
@@ -412,15 +413,29 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_eth_hdr->ether_type = htons(ethertype_ip);
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
   memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
+
+  new_ip_hdr->ip_v = 4;
+  new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
+  new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
+  new_ip_hdr->ip_tos = 0;
+  new_ip_hdr->ip_id = htons(0);
+  new_ip_hdr->ip_off = htons(IP_DF);
+  new_ip_hdr->ip_p = ip_protocol_icmp;
+
   /* set icmp hdr */
   sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_sum = 0;
   new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, length - sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
 
+  printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
   forward_packet(sr, new_pkt, length, out_interface, rt_entry->gw.s_addr);
 }
+
+/**
+ * Type 3 header
+*/
 
 void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code)
 {
@@ -458,6 +473,7 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   memcpy(new_icmp_t3_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
   new_icmp_t3_hdr->unused = 0;
   new_icmp_t3_hdr->next_mtu = 1500;
+  memcpy(new_icmp_t3_hdr->data, old_ip_hdr, sizeof(sr_ip_hdr_t)); /*Copy old header.*/ 
   new_icmp_t3_hdr->icmp_sum = 0;
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
@@ -484,6 +500,10 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
 
 
 }
+
+/**
+ * Type 11 Header
+*/
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
 
@@ -530,6 +550,7 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   memcpy(new_icmp_t3_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
   new_icmp_t3_hdr->unused = 0;
   new_icmp_t3_hdr->next_mtu = 1500;
+  memcpy(new_icmp_t3_hdr->data, old_ip_hdr, sizeof(sr_ip_hdr_t)); /*Copy old header.*/ 
   new_icmp_t3_hdr->icmp_sum = 0;
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
