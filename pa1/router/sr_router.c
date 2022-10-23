@@ -470,6 +470,9 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   new_ip_hdr->ip_p = ip_protocol_icmp;
   new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
   new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
+  new_ip_hdr->ip_sum = 0;
+  new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
+
 
   /*build icmp t3 hdr*/
   new_icmp_t3_hdr->icmp_type = 3;
