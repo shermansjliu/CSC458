@@ -488,8 +488,7 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   memcpy(new_icmp_t3_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
   new_icmp_t3_hdr->unused = 0;
   new_icmp_t3_hdr->next_mtu = 1500;
-  new_icmp_t3_hdr->icmp_sum = 0;
-  new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
+
 
   print_hdrs(new_pkt, new_pkt_length);
   if (code != 3)
@@ -505,6 +504,9 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
     struct sr_if *sr_if = sr_get_interface(sr, if_curr->name);
     new_ip_hdr->ip_src = sr_if->ip;
   }
+  
+  new_icmp_t3_hdr->icmp_sum = 0;
+  new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
   if (code == 1)
   {
     struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);

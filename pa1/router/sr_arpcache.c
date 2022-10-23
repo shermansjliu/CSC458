@@ -109,9 +109,10 @@ void sr_arpcache_sweepreqs(struct sr_instance *sr)
     /* Fire A request off */
 
     struct sr_arpreq *curr = sr->cache.requests;
-
+    struct sr_arpreq *curr_next = NULL;
     while (curr)
     {
+        curr_next = curr->next;
         handle_arpreq(curr, sr);
         curr = curr->next;
     }
