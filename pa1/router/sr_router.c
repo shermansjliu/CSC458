@@ -544,7 +544,11 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   new_ip_hdr->ip_id = htons(0);
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
-  new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
+  if (code == 3) {
+    new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
+  } else {
+      new_ip_hdr->ip_src = sr_get_interface(sr, interface)->ip;
+  }
   new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
 
 
