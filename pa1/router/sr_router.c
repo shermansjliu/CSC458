@@ -419,7 +419,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, length - sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
 
   print_hdrs(new_pkt, length);
-  forward_packet(sr, new_pkt, length, out_interface, out_interface->ip);
+  forward_packet(sr, new_pkt, length, out_interface, rt_entry->gw.s_addr);
 }
 
 void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code)
@@ -473,12 +473,8 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
 
   But the destination interface of the send icmp unreachable methods (type 3, code 1) is the coming interface, this handles that edge case
   */
-  if (out_if->ip != rt_entry->gw.s_addr)
-  {
-    printf("\nFORWARD ERROR IN SEND ICMP UNREACHABLE\n");
-    return;
-  }
-  forward_packet(sr, new_pkt, new_pkt_length, out_if, out_if->ip);
+  
+  forward_packet(sr, new_pkt, new_pkt_length, out_if, rt_entry->gw.s_addr);
   return;
   /*
   The interface variable is the name if the incoming interface
@@ -540,13 +536,7 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   printf("========Built ICMP Type 11 MSG====== \n");
   print_hdrs(new_pkt, new_pkt_length);
 
-  if (sr_if->ip == rt_entry->gw.s_addr)
-  {
-    forward_packet(sr, new_pkt, new_pkt_length, sr_if, sr_if->ip);
-  }
-  else
-  {
-    printf("\n SOMETHING WENT WRONG \n");
-  }
+  printf("Outgoing interface->ip %d, rt_entry->gateway.sddr %d \n", ntohs(sr_if->ip), ntohs(rt_entry->gw.s_addr));
+  forward_packet(sr, new_pkt, new_pkt_length, sr_if, rt_entry->gw.s_addr);
   free(new_pkt);
 }
