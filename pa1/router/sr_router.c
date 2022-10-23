@@ -192,12 +192,14 @@ void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length
 
 int handle_icmp_ip(struct sr_instance *sr, unsigned int icmp_ip_packet_length, uint8_t *icmp_packet)
 {
+
 }
 
 sr_ip_hdr_t *get_ip_hdr(uint8_t *packet)
 {
   return (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 }
+
 bool forward_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, char *interface)
 {
   sr_ip_hdr_t *ip_hdr = get_ip_hdr(packet);
@@ -293,7 +295,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
       TODO: Error checking on icmp packet
       */
       
-      /* 8 : icmp request type 8 means an echo */
+      /* icmp type 8 is an echo request */
       sr_icmp_hdr_t * icmp_hdr = (sr_icmp_hdr_t *)(packet);
       if (icmp_hdr->icmp_type == 8)
       {
@@ -480,17 +482,7 @@ void construct_icmp_ethr_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hd
   new_ethernet_hdr->ether_type = htons(ethertype_ip);
   memmove(new_ethernet_hdr->ether_shost, old_ethernet_hdr->ether_dhost, ETHER_ADDR_LEN);
   memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
-  /*
-  memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
-    memmove(new_ethernet_hdr->ether_shost, matched_entry_interface->addr, ETHER_ADDR_LEN);
-*/
 }
-
-/*
-void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char* interface, )
-{
-  if
-}*/
 
 void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
@@ -514,6 +506,27 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 }
 
 
+
+void send_icmp_unreachable(struct sr_instnace *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code) {
+
+  printf("Send ICMP type: %d, code: %d\n", 3, code);
+  sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
+  sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
+
+  unsigned int new_pkt_length = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t);
+  uint8_t *new_pkt = malloc(new_pkt_length);
+  sr_ethernet_hdr_t *new_eth_hdr = (sr_ethernet_hdr_t *)(new_pkt);
+  sr_ip_hdr_t *new_ip_hdr = (sr_ip_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t));
+  sr_icmp_t3_hdr_t *new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+
+  /* build eth hdr */
+  new_eth_hdr->ether_type = htons(ethertype_ip);
+  memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
+  memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
+
+
+}
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
 
@@ -538,7 +551,7 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
   new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
-  new_ip_hdr->ip_id = 0;
+  new_ip_hdr->ip_id = htons(0);
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
   new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
@@ -560,7 +573,8 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
 
   print_hdrs(new_pkt, new_pkt_length);
 
-  sr_send_packet(sr, new_pkt, new_pkt_length, interface);
+  /*Outgoing interface is also the incoming interface since we want to send it back to the host that echoed*/
+  forward_packet(sr, new_pkt, new_pkt_length, interface);
   free(new_pkt);
 }
 
