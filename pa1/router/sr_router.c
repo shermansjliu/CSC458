@@ -535,19 +535,12 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
   
-  /* set ip src
-  // struct sr_if *if_curr = sr->if_list;
-  //   while (if_curr) 
-  //   {
-  //     if (if_curr->ip == old_ip_hdr->ip_src){
-  //         break; 
-  //     }
-  //     if_curr = if_curr->next;
-  //   }
-  // struct sr_if *sr_if = sr_get_interface(sr, if_curr->name);
-  */
+  /* set ip src*/
+  struct sr_rt* rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
+  struct sr_if *sr_if = sr_get_interface(sr, rt_entry->interface);
   
-  new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
+  printf("old_hdr_ip->ip_dst %d, interface ip %d \n", old_ip_hdr->ip_dst, sr_if->ip);
+  new_ip_hdr->ip_src = sr_if->ip;
   new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
   new_ip_hdr->ip_sum = 0;
   new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
