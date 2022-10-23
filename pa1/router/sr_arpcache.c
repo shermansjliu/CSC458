@@ -31,7 +31,7 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
 {
     time_t current_time;
     time(&current_time);
-    if (difftime(current_time, arpr->sent) >= 1.0) /* Pseudocode says to use 1 piazza says >= https://piazza.com/class/l5gx8w2al3g4zh/post/150*/
+    if (difftime(current_time, arpr->sent) >= 1.0) /* Pseudocode says to use >= 1 piazza says >= https://piazza.com/class/l5gx8w2al3g4zh/post/150*/
     {
         if (arpr->times_sent >= 5)
         {
@@ -49,11 +49,7 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
                  */
 
                 /* Send unreachable ICMP packet for an interface that exists*/
-                struct sr_if *inf = sr_get_interface(sr, pkt->iface);
-                if (inf != NULL)
-                {
-                    send_icmp_unreachable(sr, pkt->buf, pkt->len, pkt->iface, 1);
-                }
+                send_icmp_unreachable(sr, pkt->buf, pkt->len, pkt->iface, 1);
 
                 /* Iterate linked list*/
                 pkt = pkt->next;
