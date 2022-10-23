@@ -488,6 +488,19 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
   print_hdrs(new_pkt, new_pkt_length);
+  if (code != 3)
+  {
+    /*Send to router need to get the interface that it's received from*/
+    struct sr_if *if_curr = sr->if_list;
+    while (if_curr) {
+      if (if_curr->ip == old_ip_hdr->ip_src){
+          break; 
+      }
+      if_curr = if_curr->next;
+    }
+    struct sr_if *sr_if = sr_get_interface(sr, if_curr->name);
+    new_ip_hdr->ip_src = sr_if->ip;
+  }
   if (code == 1)
   {
     struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
