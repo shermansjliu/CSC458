@@ -246,7 +246,6 @@ bool forward_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet
     /* freeing this based on sr_arpcache_lookup implementation */
     free(arp_cached_entry);
   }
-  /*check_arp_cache_send_packet(sr, packet, packet_length, outgoing_interface, ip_hdr->ip_dst);*/
 
   return true;
 }
@@ -294,7 +293,6 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
       sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(packet);
       if (icmp_hdr->icmp_type == 8)
       {
-        printf("ICMP ECHO\n");
         send_icmp_echo(sr, packet, packet_length, interface);
         return 1;
       }
@@ -481,7 +479,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code)
 {
 
-  printf("Send ICMP type: %d, code: %d\n", 3, code);
+  printf("Send ICMP unreachable type: %d, code: %d\n", 3, code);
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
@@ -524,13 +522,20 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   {
     struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
 
+    /*
+    When code == 1, we pass in the outgoing interface
+
+    But the destination interface of the send icmp unreachable methods (type 3, code 1) is the coming interface, this handles that edge case
+    */
     forward_packet(sr, new_pkt, new_pkt_length, rt_entry->interface); /* TODO verify rt_entry-> interface is an array? Will there be memory issues*/
     return;
   }
-  /*The new ip_dst is the old ip_src and in forward packet we get the inferface of the entry that has the ip of the ip src
-  Thereofre, the incoming interface is the destination
+  /*
+  The interface variable is the name if the incoming interface
+  Forward IP expects the interface to be the name of the destination interface
 
-  When code == 1, we pass in the outgoing interface
+  Because the new ip_dst is the old ip_src, passing in the incoming interface and not changing it is fine
+
   */
   forward_packet(sr, new_pkt, new_pkt_length, interface);
 }
