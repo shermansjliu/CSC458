@@ -84,36 +84,6 @@ int is_valid_icmp_ip(unsigned int icmp_ip_packet_length, uint8_t *icmp_ip_packet
   return 1;
 }
 
-/*
- Create ARP Request and send it to the right interface
-*/
-void build_arp_hdr(sr_arp_hdr_t *new_arp_reply_hdr, sr_arp_hdr_t *arp_request_hdr, struct sr_if *sr_interface)
-{
-  /* Copying over ap request data */
-  new_arp_reply_hdr->ar_hrd = arp_request_hdr->ar_hrd;
-  new_arp_reply_hdr->ar_pro = arp_request_hdr->ar_pro;
-  new_arp_reply_hdr->ar_hln = arp_request_hdr->ar_hln;
-  new_arp_reply_hdr->ar_pln = arp_request_hdr->ar_pln;
-
-  /* One or the other */
-  new_arp_reply_hdr->ar_op = htons(arp_op_reply); /* to be extra safe :) */
-
-  /* change Src Dest IP and MAC */
-  new_arp_reply_hdr->ar_sip = sr_interface->ip;
-  new_arp_reply_hdr->ar_tip = arp_request_hdr->ar_sip;
-
-  memmove(new_arp_reply_hdr->ar_tha, arp_request_hdr->ar_sha, ETHER_ADDR_LEN);
-  memmove(new_arp_reply_hdr->ar_sha, sr_interface->addr, ETHER_ADDR_LEN);
-}
-void build_arp_reply_ethernet_hdr(sr_ethernet_hdr_t *new_ethernet_hdr, sr_ethernet_hdr_t *old_ethernet_hdr, struct sr_if *sr_interface)
-{
-  new_ethernet_hdr->ether_type = htons(ethertype_arp);
-
-  /*check if using memcopy makes a difference */
-  memmove(new_ethernet_hdr->ether_dhost, old_ethernet_hdr->ether_shost, ETHER_ADDR_LEN);
-  memmove(new_ethernet_hdr->ether_shost, sr_interface->addr, ETHER_ADDR_LEN);
-}
-
 void handle_arp_reply(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
   printf("Handling ARP Reply\n");
@@ -129,7 +99,7 @@ void handle_arp_reply(struct sr_instance *sr, uint8_t *packet, unsigned int leng
   while (curr_packet)
   {
     struct sr_if *pkt_interface = sr_get_interface(sr, curr_packet->iface);
-    if (interface)
+    if (pkt_interface)
     {
       /* update eth hdr*/
       sr_ethernet_hdr_t *pkt_eth_hdr = (sr_ethernet_hdr_t *)(curr_packet->buf);
