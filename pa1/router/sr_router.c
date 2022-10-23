@@ -130,7 +130,7 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
     }
   }
   else {
-    printf("ARP reply error\n");
+    printf("ARP packet error\n");
   }
 }
 
