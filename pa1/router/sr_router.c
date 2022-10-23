@@ -535,19 +535,19 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
   
-  /* set ip src*/
-  struct sr_if *if_curr = sr->if_list;
-    while (if_curr) 
-    {
-      if (if_curr->ip == old_ip_hdr->ip_src){
-          break; 
-      }
-      if_curr = if_curr->next;
-    }
-    struct sr_if *sr_if = sr_get_interface(sr, if_curr->name);
-    new_ip_hdr->ip_src = sr_if->ip;
-    
-
+  /* set ip src
+  // struct sr_if *if_curr = sr->if_list;
+  //   while (if_curr) 
+  //   {
+  //     if (if_curr->ip == old_ip_hdr->ip_src){
+  //         break; 
+  //     }
+  //     if_curr = if_curr->next;
+  //   }
+  // struct sr_if *sr_if = sr_get_interface(sr, if_curr->name);
+  */
+  
+  new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
   new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
   new_ip_hdr->ip_sum = 0;
   new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
@@ -562,6 +562,7 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   new_icmp_t3_hdr->icmp_sum = 0;
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
+  printf("========Built ICMP Type 11 MSG====== \n");
   print_hdrs(new_pkt, new_pkt_length);
 
   forward_packet(sr, new_pkt, new_pkt_length, interface);
