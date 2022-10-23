@@ -336,7 +336,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
     }
 
     struct sr_if *outgoing_interface = sr_get_interface(sr, rt_entry->interface);
-    bool is_forward_packet_succesful = forward_packet(sr, packet, packet_length, outgoing_interface, outgoing_interface->ip);
+    bool is_forward_packet_succesful = forward_packet(sr, packet, packet_length, outgoing_interface, rt_entry->gw.s_addr);
     if (is_forward_packet_succesful)
     {
       printf("Successfully forwarded packet\n");
