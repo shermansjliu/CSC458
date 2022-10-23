@@ -136,6 +136,7 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
 
 void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
+  printf("Handling ARP Request - Build ARP Reply \n");
   uint8_t *new_hdr = malloc(length);
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_arp_hdr_t *old_arp_hdr = (sr_arp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
