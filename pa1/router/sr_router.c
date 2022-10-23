@@ -324,11 +324,11 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
 
   else
   {
-    printf("Forward packet \n");
+    printf("Forward packet (before subtracting) \n");
     /* Handle TTL */
-    ip_hdr->ip_ttl--;
     print_hdrs(packet, packet_length);
 
+    ip_hdr->ip_ttl--;
     if (ip_hdr->ip_ttl == 0)
     {
       printf("Send ICMP type 11 message \n");
@@ -505,7 +505,10 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
 
+
+ 
   printf("TTL ICMP packet\n");
+  printf("incoming interface %c \n", interface);
 
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
@@ -515,6 +518,8 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   sr_ethernet_hdr_t *new_eth_hdr = (sr_ethernet_hdr_t *)(new_pkt);
   sr_ip_hdr_t *new_ip_hdr = (sr_ip_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t));
   sr_icmp_t3_hdr_t *new_icmp_t3_hdr = (sr_icmp_t3_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
+
+
 
   /* build eth hdr */
   new_eth_hdr->ether_type = htons(ethertype_ip);
@@ -529,7 +534,20 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   new_ip_hdr->ip_id = htons(0);
   new_ip_hdr->ip_off = htons(IP_DF);
   new_ip_hdr->ip_p = ip_protocol_icmp;
-  new_ip_hdr->ip_src = old_ip_hdr->ip_dst;
+  
+  /* set ip src*/
+  struct sr_if *if_curr = sr->if_list;
+    while (if_curr) 
+    {
+      if (if_curr->ip == old_ip_hdr->ip_src){
+          break; 
+      }
+      if_curr = if_curr->next;
+    }
+    struct sr_if *sr_if = sr_get_interface(sr, if_curr->name);
+    new_ip_hdr->ip_src = sr_if->ip;
+    
+
   new_ip_hdr->ip_dst = old_ip_hdr->ip_src;
   new_ip_hdr->ip_sum = 0;
   new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
