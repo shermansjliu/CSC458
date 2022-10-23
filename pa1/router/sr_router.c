@@ -414,8 +414,9 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
   memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
 
-  new_ip_hdr->ip_v = 4;
-  new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
+  memcpy(new_ip_hdr, old_ip_hdr, sizeof(sr_ip_hdr_t));
+
+  new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
   new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
   new_ip_hdr->ip_id = htons(0);
@@ -455,6 +456,8 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
   memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
 
+  memcpy(new_ip_hdr, old_ip_hdr, sizeof(sr_ip_hdr_t));
+
   /*build ip hdr*/
   new_ip_hdr->ip_v = 4;
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
@@ -473,7 +476,6 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   memcpy(new_icmp_t3_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
   new_icmp_t3_hdr->unused = 0;
   new_icmp_t3_hdr->next_mtu = 1500;
-  memcpy(new_icmp_t3_hdr->data, old_ip_hdr, sizeof(sr_ip_hdr_t)); /*Copy old header.*/ 
   new_icmp_t3_hdr->icmp_sum = 0;
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
@@ -524,6 +526,8 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
   memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
 
+  memcpy(new_ip_hdr, old_ip_hdr, sizeof(sr_ip_hdr_t));
+
   /* build ip hdr*/
   new_ip_hdr->ip_v = 4;
   new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_t3_hdr_t));
@@ -550,7 +554,6 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   memcpy(new_icmp_t3_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
   new_icmp_t3_hdr->unused = 0;
   new_icmp_t3_hdr->next_mtu = 1500;
-  memcpy(new_icmp_t3_hdr->data, old_ip_hdr, sizeof(sr_ip_hdr_t)); /*Copy old header.*/ 
   new_icmp_t3_hdr->icmp_sum = 0;
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
