@@ -60,6 +60,43 @@ void sr_init(struct sr_instance *sr)
 /*
  Returns 1 if ip packet is valid, 0 otherwise
 */
+void sr_handlepacket(struct sr_instance *sr,
+                     uint8_t *packet /* lent */,
+                     unsigned int len,
+                     char *interface /* lent */)
+{
+  /* REQUIRES */
+  assert(sr);
+  assert(packet);
+  assert(interface);
+
+  printf("*** -> Received packet of length %d \n", len);
+
+  if (is_ethernet_packet_too_short(len))
+  {
+    printf("Invalid Ethernet packet: too short");
+    return;
+  }
+
+  /* ip packet */
+  if (ethertype(packet) == ethertype_ip)
+  {
+    printf("This is an IP Packet \n");
+    handle_ip_packet(sr, packet, len, interface);
+  }
+  else if (ethertype(packet) == ethertype_arp)
+  {
+    printf("This is an ARP Packet \n");
+    handle_arp_packet(sr, packet, len, interface);
+  }
+
+  else
+  {
+    printf("Packet is of invalid type \n");
+  }
+
+} /* end sr_ForwardPacket */
+
 int is_valid_icmp_ip(unsigned int icmp_ip_packet_length, uint8_t *icmp_ip_packet)
 {
   unsigned int correct_icmp_ip_packet_length = icmp_ip_packet_length + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t);
