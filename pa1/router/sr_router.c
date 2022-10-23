@@ -336,7 +336,6 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
     }
 
     struct sr_if *outgoing_interface = sr_get_interface(sr, rt_entry->interface);
-    printf("Outgoing interface->ip %d, rt_entry->gateway.sddr %d \n", ntohs(outgoing_interface->ip), ntohs(rt_entry->gw.s_addr));
     bool is_forward_packet_succesful = forward_packet(sr, packet, packet_length, outgoing_interface, outgoing_interface->ip);
     if (is_forward_packet_succesful)
     {
@@ -401,7 +400,6 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 {
   printf("Sending ICMP Echo packet\n");
 
-
   uint8_t *new_pkt = malloc(length);
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
@@ -421,9 +419,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, length - sizeof(struct sr_ethernet_hdr) - sizeof(struct sr_ip_hdr));
 
   print_hdrs(new_pkt, length);
-  /*Outgoing interface is also the incoming interface since we want to send it back to the host that echoed*/
-  forward_packet(sr, new_pkt, length, out_interface, rt_entry->gw.s_addr);
-  /*sr_send_packet(sr, new_pkt, length, interface);*/
+  forward_packet(sr, new_pkt, length, out_interface, out_interface->ip);
 }
 
 void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code)
@@ -466,44 +462,31 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   new_icmp_t3_hdr->icmp_sum = cksum(new_icmp_t3_hdr, sizeof(sr_icmp_t3_hdr_t));
 
   print_hdrs(new_pkt, new_pkt_length);
-  if (code != 3)
-  {
-    /*Send to router need to get the interface that it's received from*/
-    struct sr_if *if_curr = sr->if_list;
-    while (if_curr)
-    {
-      if (if_curr->ip == old_ip_hdr->ip_src)
-      {
-        break;
-      }
-      if_curr = if_curr->next;
-    }
-    struct sr_if *sr_if = sr_get_interface(sr, if_curr->name);
-    new_ip_hdr->ip_src = sr_if->ip;
-  }
   new_ip_hdr->ip_sum = 0;
   new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
 
-  if (code == 1)
+  struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
+  struct sr_if *out_if = sr_get_interface(sr, rt_entry->interface);
+
+  /*
+  When code == 1, we pass in the outgoing interface
+
+  But the destination interface of the send icmp unreachable methods (type 3, code 1) is the coming interface, this handles that edge case
+  */
+  if (out_if->ip != rt_entry->gw.s_addr)
   {
-    struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
-
-    /*
-    When code == 1, we pass in the outgoing interface
-
-    But the destination interface of the send icmp unreachable methods (type 3, code 1) is the coming interface, this handles that edge case
-    */
-    /*TODO forward_packet(sr, new_pkt, new_pkt_length, rt_entry->interface); /* TODO verify rt_entry-> interface is an array? Will there be memory issues*/
+    printf("\nFORWARD ERROR IN SEND ICMP UNREACHABLE\n");
     return;
   }
+  forward_packet(sr, new_pkt, new_pkt_length, out_if, out_if->ip);
+  return;
   /*
   The interface variable is the name if the incoming interface
   Forward IP expects the interface to be the name of the destination interface
 
-  Because the new ip_dst is the old ip_src, passing in the incoming interface and not changing it is fine
+  Because the new ip_dst is the old ip_src, passing in the incoming interface and not changing it is fine*/
 
-  
-  /*TODO forward_packet(sr, new_pkt, new_pkt_length, interface);*/
+
 }
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
 {
@@ -557,6 +540,13 @@ void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsi
   printf("========Built ICMP Type 11 MSG====== \n");
   print_hdrs(new_pkt, new_pkt_length);
 
-  forward_packet(sr, new_pkt, new_pkt_length, sr_if, rt_entry->gw.s_addr);
+  if (sr_if->ip == rt_entry->gw.s_addr)
+  {
+    forward_packet(sr, new_pkt, new_pkt_length, sr_if, sr_if->ip);
+  }
+  else
+  {
+    printf("\n SOMETHING WENT WRONG \n");
+  }
   free(new_pkt);
 }
