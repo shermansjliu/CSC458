@@ -129,6 +129,9 @@ void handle_arp_packet(struct sr_instance *sr, uint8_t *packet, unsigned int len
       handle_arp_req(sr, packet, length, interface);
     }
   }
+  else {
+    printf("ARP reply error\n");
+  }
 }
 
 void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface)
