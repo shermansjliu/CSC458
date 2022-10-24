@@ -412,6 +412,9 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
   struct sr_if *out_interface = sr_get_interface(sr, rt_entry->interface);
   printf("old_hdr_ip->ip_dst %d, interface ip %d \n", ntohs(old_ip_hdr->ip_dst), ntohs(out_interface->ip));
+  
+  memcpy(new_pkt, packet, new_pkt_length);
+
   /* set eth hdr*/
   new_eth_hdr->ether_type = htons(ethertype_ip);
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
