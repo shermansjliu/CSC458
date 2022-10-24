@@ -443,6 +443,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_icmp_hdr->icmp_sum = 0;
   new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_hdr_t));
 
+  printf("New Packet length: %d \n", new_pkt_length);
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
   forward_packet(sr, new_pkt, new_pkt_length, out_interface, rt_entry->gw.s_addr);
