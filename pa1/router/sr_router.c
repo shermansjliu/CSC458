@@ -279,7 +279,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
       */
 
       /* icmp type 8 is an echo request */
-      sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(packet);
+      sr_icmp_hdr_t *icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
       if (icmp_hdr->icmp_type == 8)
       {
         send_icmp_echo(sr, packet, packet_length, interface);
@@ -295,7 +295,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
       code: 3
       Name: port unreachable
       */
-      send_icmp_unreachable(sr, packet, packet_length, interface, 3);
+      send_icmp_t3_t11(sr, packet, packet_length, interface, 3, 3);
       return 1;
     }
   }
@@ -311,7 +311,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
     {
       printf("Send ICMP type 11 message \n");
 
-      send_icmp_time_limit_exceeded(sr, packet, packet_length, interface);
+      send_icmp_t3_t11(sr, packet, packet_length, interface, 11, 0);
       return 0;
     }
 
@@ -331,7 +331,7 @@ int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packe
       Sent if there is a non-existent route to the destination IP (no matching entry in the routing table when forwarding an IP packet).
       */
       printf("IP does not exist in routing table \n");
-      send_icmp_unreachable(sr, packet, packet_length, interface, 0);
+      send_icmp_t3_t11(sr, packet, packet_length, interface, 3, 0);
       return false;
     }
 
@@ -433,7 +433,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_sum = 0;
-  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
+  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_hdr_t));
 
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
@@ -515,10 +515,10 @@ void send_icmp_host_unreachable(struct sr_instance *sr, uint8_t *packet, unsigne
  * Type 3 header
 */
 
-void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code)
+void send_icmp_t3_t11(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t type, uint8_t code)
 {
 
-  printf("Send ICMP unreachable type: %d, code: %d\n", 3, code);
+  printf("Send ICMP unreachable type: %d, code: %d\n", type, code);
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
 
@@ -553,7 +553,7 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
 
 
   /*build icmp t3 hdr*/
-  new_icmp_t3_hdr->icmp_type = 3;
+  new_icmp_t3_hdr->icmp_type = type;
   new_icmp_t3_hdr->icmp_code = code;
 
   memcpy(new_icmp_t3_hdr->data, old_ip_hdr, ICMP_DATA_SIZE);
@@ -569,11 +569,6 @@ void send_icmp_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int
   struct sr_rt *rt_entry = get_longest_matched_prefix(old_ip_hdr->ip_src, sr);
   struct sr_if *out_if = sr_get_interface(sr, rt_entry->interface);
 
-  /*
-  When code == 1, we pass in the outgoing interface
-
-  But the destination interface of the send icmp unreachable methods (type 3, code 1) is the coming interface, this handles that edge case
-  */
   
   forward_packet(sr, new_pkt, new_pkt_length, out_if, rt_entry->gw.s_addr);
   return;

@@ -49,7 +49,7 @@ void handle_arpreq(struct sr_arpreq *arpr, struct sr_instance *sr)
                  */
 
                 /* Send unreachable ICMP packet for an interface that exists*/
-                send_icmp_unreachable(sr, pkt->buf, pkt->len, pkt->iface, 1);
+                send_icmp_t3_t11(sr, pkt->buf, pkt->len, pkt->iface, 3, 1);
 
                 /* Iterate linked list*/
                 pkt = pkt->next;
