@@ -422,7 +422,6 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 
   new_ip_hdr->ip_v = 4;
   new_ip_hdr->ip_hl = 5;
-  new_ip_hdr->ip_len = htons(sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
   new_ip_hdr->ip_ttl = 168; /* some large number within 8 bits*/
   new_ip_hdr->ip_tos = 0;
   new_ip_hdr->ip_id = htons(0);
