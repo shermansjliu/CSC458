@@ -4,6 +4,7 @@
 #include <netinet/in.h>
 #include <sys/time.h>
 #include <stdio.h>
+#include <stdbool.h>
 
 #include "sr_protocol.h"
 #include "sr_arpcache.h"
@@ -66,6 +67,8 @@ void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length
 void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 void send_icmp_t3_t11(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t type, uint8_t code);
+
+bool forward_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *out_interface, uint32_t dest_ip);
 void send_icmp_host_unreachable(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t code);
 int is_ethernet_packet_too_short(unsigned int packet_length);
 int handle_ip_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, char *interface);

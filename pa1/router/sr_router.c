@@ -198,7 +198,8 @@ void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length
   print_hdr_eth((uint8_t *)new_ethr_hdr);
   print_hdr_arp((uint8_t *)new_arp_rep_hdr);
 
-  sr_send_packet(sr, new_hdr, length, interface);
+  forward_packet(sr, new_hdr, length, sr_if, old_arp_hdr->ar_sip);
+  /*sr_send_packet(sr, new_hdr, length, interface);*/
   free(new_hdr);
 }
 
