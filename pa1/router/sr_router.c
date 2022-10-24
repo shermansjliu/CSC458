@@ -9,7 +9,7 @@
 #include "sr_arpcache.h"
 #include "sr_utils.h"
 #include "sr_arpcache.h"
-
+ 
 /* custom import */
 #include <stdlib.h>
 
@@ -430,10 +430,11 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_ip_hdr->ip_sum = cksum(new_ip_hdr, sizeof(sr_ip_hdr_t));
 
   /* set icmp hdr */
+  unsigned int icmp_length = length - sizeof(sr_ethernet_hdr_t) - sizeof(sr_ip_hdr_t);
   sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_sum = 0;
-  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_hdr_t));
+  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, icmp_length);
 
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
