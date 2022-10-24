@@ -433,7 +433,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_sum = 0;
-  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_t3_hdr_t));
+  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_hdr_t));
 
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
