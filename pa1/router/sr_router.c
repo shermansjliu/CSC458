@@ -400,7 +400,8 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 {
   printf("Sending ICMP Echo packet\n");
 
-  uint8_t *new_pkt = malloc(sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t));
+  unsigned int new_pkt_length = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t);
+  uint8_t *new_pkt = malloc(new_pkt_length);
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_ethernet_hdr_t *new_eth_hdr = (sr_ethernet_hdr_t *)(new_pkt);
@@ -438,7 +439,7 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
-  forward_packet(sr, new_pkt, length, out_interface, rt_entry->gw.s_addr);
+  forward_packet(sr, new_pkt, new_pkt_length, out_interface, rt_entry->gw.s_addr);
 }
 
 /**
