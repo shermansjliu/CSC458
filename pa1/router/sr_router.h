@@ -64,7 +64,6 @@ void sr_handlepacket(struct sr_instance* , uint8_t * , unsigned int , char* );
 /* custom methods in sr_router.c */
 void check_arp_cache_send_packet(struct sr_instance *sr, uint8_t *packet, unsigned int packet_length, struct sr_if *interface, uint32_t dest_ip);
 void handle_arp_req(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
-void send_icmp_time_limit_exceeded(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface);
 void send_icmp_t3_t11(struct sr_instance *sr, uint8_t *packet, unsigned int length, char *interface, uint8_t type, uint8_t code);
 
