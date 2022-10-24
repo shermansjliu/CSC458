@@ -400,8 +400,9 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 {
   printf("Sending ICMP Echo packet\n");
 
-  unsigned int new_pkt_length = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t) + sizeof(sr_icmp_hdr_t);
-  uint8_t *new_pkt = malloc(new_pkt_length);
+  unsigned int icmp_offset = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t);
+  uint8_t *new_pkt = malloc(length);
+
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_hdr_t *old_icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
@@ -413,7 +414,6 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   struct sr_if *out_interface = sr_get_interface(sr, rt_entry->interface);
   printf("old_hdr_ip->ip_dst %d, interface ip %d \n", ntohs(old_ip_hdr->ip_dst), ntohs(out_interface->ip));
   
-  memcpy(new_pkt, packet, new_pkt_length);
 
   /* set eth hdr*/
   new_eth_hdr->ether_type = htons(ethertype_ip);
@@ -441,12 +441,13 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_code = 0;
   new_icmp_hdr->icmp_sum = 0;
-  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, sizeof(sr_icmp_hdr_t));
+  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, length - icmp_offset);
 
-  printf("New Packet length: %d \n", new_pkt_length);
+  printf("Length 1: %lu Length 2: %d", sizeof(sr_ip_hdr_t), 4 * ntohs(old_ip_hdr->ip_len));
+  /*printf("New Packet length: %d \n", new_pkt_length);*/
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
-  forward_packet(sr, new_pkt, new_pkt_length, out_interface, rt_entry->gw.s_addr);
+  forward_packet(sr, new_pkt, length, out_interface, rt_entry->gw.s_addr);
 }
 
 /**
