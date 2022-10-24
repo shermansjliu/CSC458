@@ -419,7 +419,6 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_eth_hdr->ether_type = htons(ethertype_ip);
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
   memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
-  memcpy(new_ip_hdr, old_ip_hdr, sizeof(sr_ip_hdr_t));
 
   new_ip_hdr->ip_v = 4;
   new_ip_hdr->ip_hl = 5;
@@ -436,7 +435,6 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 
   /* set icmp hdr */
   sr_icmp_hdr_t *new_icmp_hdr = (sr_icmp_hdr_t *)(new_pkt + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
-  memcpy(new_icmp_hdr, old_icmp_hdr, sizeof(sr_icmp_hdr_t));
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_code = 0;
   new_icmp_hdr->icmp_sum = 0;
