@@ -400,9 +400,9 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
 {
   printf("Sending ICMP Echo packet\n");
 
-  unsigned int icmp_offset = sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t);
   uint8_t *new_pkt = malloc(length);
-
+  memcpy(new_pkt, packet, length);
+  
   sr_ethernet_hdr_t *old_eth_hdr = (sr_ethernet_hdr_t *)(packet);
   sr_ip_hdr_t *old_ip_hdr = (sr_ip_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t));
   sr_icmp_hdr_t *old_icmp_hdr = (sr_icmp_hdr_t *)(packet + sizeof(sr_ethernet_hdr_t) + sizeof(sr_ip_hdr_t));
@@ -419,7 +419,6 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_eth_hdr->ether_type = htons(ethertype_ip);
   memcpy(new_eth_hdr->ether_shost, old_eth_hdr->ether_dhost, ETHER_ADDR_LEN);
   memcpy(new_eth_hdr->ether_dhost, old_eth_hdr->ether_shost, ETHER_ADDR_LEN);
-
   memcpy(new_ip_hdr, old_ip_hdr, sizeof(sr_ip_hdr_t));
 
   new_ip_hdr->ip_v = 4;
@@ -441,9 +440,9 @@ void send_icmp_echo(struct sr_instance *sr, uint8_t *packet, unsigned int length
   new_icmp_hdr->icmp_type = 0;
   new_icmp_hdr->icmp_code = 0;
   new_icmp_hdr->icmp_sum = 0;
-  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, length - icmp_offset);
+  new_icmp_hdr->icmp_sum = cksum(new_icmp_hdr, ntohs(old_ip_hdr->ip_len) - (4 * old_ip_hdr->ip_hl));
 
-  printf("Length 1: %lu Length 2: %d", sizeof(sr_ip_hdr_t), 4 * old_ip_hdr->ip_hl);
+  /*printf("Length 1: %lu Length 2: %d", sizeof(sr_ip_hdr_t), 4 * old_ip_hdr->ip_hl);*/
   /*printf("New Packet length: %d \n", new_pkt_length);*/
   printf("Populating ICMP Echo Header.\n");
   print_hdrs(new_pkt, length);
