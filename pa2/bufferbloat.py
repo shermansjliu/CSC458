@@ -45,6 +45,7 @@ parser.add_argument('--delay',
 parser.add_argument('--dir', '-d',
                     help="Directory to store outputs",
                     required=True)
+                    #Maybe change defualt to ./
 
 parser.add_argument('--time', '-t',
                     help="Duration (sec) to run the experiment",
@@ -81,6 +82,18 @@ class BBTopo(Topo):
         switch = self.addSwitch('s0')
 
         # TODO: Add links with appropriate characteristics
+        h1 = hosts[1]
+        h2 = hosts[2]
+        
+        h1_bw = args.bw_host
+        h2_bw = args.bw_net
+        link_delay = args.delay
+        max_qsize = args.maxq
+                
+        self.addLink(h1, switch, bw=h1_bw, delay=link_delay, max_queue_size=max_qsize)
+        self.addLink(h2, switch, bw=h2_bw, delay=link_delay, max_queue_size=max_qsize)
+
+
 
 # Simple wrappers around monitoring utilities.  You are welcome to
 # contribute neatly written (using classes) monitoring scripts for
@@ -104,7 +117,7 @@ def start_qmon(iface, interval_sec=0.1, outfile="q.txt"):
 
 def start_iperf(net):
     h2 = net.get('h2')
-    print "Starting iperf server..."
+    print ("Starting iperf server...")
     # For those who are curious about the -w 16m parameter, it ensures
     # that the TCP flow is not receiver window limited.  If it is,
     # there is a chance that the router buffer may not get filled up.
