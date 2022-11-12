@@ -81,7 +81,6 @@ class BBTopo(Topo):
         # interface names will change from s0-eth1 to newname-eth1.
         switch = self.addSwitch('s0')
 
-        # TODO: Add links with appropriate characteristics
         h1 = hosts[1]
         h2 = hosts[2]
         
@@ -124,6 +123,10 @@ def start_iperf(net):
     server = h2.popen("iperf -s -w 16m")
     # TODO: Start the iperf client on h1.  Ensure that you create a
     # long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
+    # Get CWND through options on h1
+    h1 = net.get("h1")
+    args = ""
+    client = h1.popen("iperf")
 
 def start_webserver(net):
     h1 = net.get('h1')
