@@ -8,7 +8,7 @@ time=100
 bwnet=10
 
 # TODO: If you want the RTT to be 4ms what should the delay on each
-# link be?  Set this value correctly.
+# link be?  Set this value correctly. This should be 1. 2 links. 2ms one way, 2ms back. 
 delay=1
 
 iperf_port=5001
