@@ -249,7 +249,6 @@ def webpage_transfer_time(net):
         now = time()
         process = h1.popen(cmd)
         process_time = process.stdout.read()
-        assert(process_time.isdigit())
         process_time = float(process_time)
         times.append(process_time)
         delta = now - start_time
