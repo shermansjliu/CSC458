@@ -155,7 +155,7 @@ def start_ping(net):
     # i.e. ping ... > /path/to/ping.txt
     h2_ip = net.get('h2').IP()
     # DONE TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
-    h1.popen("ping -c {} -i 0.1 > {}/ping.txt".format(h2_ip, args.dir), shell=True)
+    h1.popen("ping -i 0.1 -w {1} {0}> {2}/ping.txt".format(h2_ip, args.time, args.dir), shell=True)
 
 
 def bufferbloat():
