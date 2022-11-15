@@ -241,7 +241,7 @@ def webpage_transfer_time(net):
     # TODO ensure that this command spits shit out on stdout
     cmd = "curl -o <file_path> -s -w %{time_total} " + h1.IP()
     times = []
-    while True and len(times) < 20:
+    while True:
         process = h2.popen(cmd)
         process_time = process.stdout.read()
         process_time = float(process_time)
