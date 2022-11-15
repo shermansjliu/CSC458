@@ -18,7 +18,6 @@ from argparse import ArgumentParser
 from monitor import monitor_qlen
 import termcolor as T
 
-import time
 import sys
 import os
 import math
@@ -249,8 +248,8 @@ def webpage_transfer_time(net):
         sleep(1)
         now = time()
         process = h1.popen(cmd)
-        time = process.stdout.read()
-        times.append(time)
+        process_time = process.stdout.read()
+        times.append(process_time)
         delta = now - start_time
         if delta > args.time:
             break
