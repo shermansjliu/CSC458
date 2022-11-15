@@ -254,6 +254,9 @@ def webpage_transfer_time(net):
         if delta > args.time:
             break
         print ("%.1fs left..." % (args.time - delta))
+    
+    assert(len(times) == 3)
+    return times
 
 if __name__ == "__main__":
     bufferbloat()
