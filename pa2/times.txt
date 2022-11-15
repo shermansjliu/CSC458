@@ -1,2 +1,2 @@
-standard deviation: 0.0201994651749
-average: 0.00429473684211
+standard deviation: 0.000471404520791
+average: 0.00133333333333
