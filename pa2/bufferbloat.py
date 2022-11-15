@@ -213,8 +213,8 @@ def bufferbloat():
     avg = helper.avg(times)
     
     f = open("times.txt", "w")
-    f.write("standard deviation: {}".format(std))
-    f.write("average: {}".format(avg))
+    f.write("standard deviation: {}\n".format(std))
+    f.write("average: {}\n".format(avg))
 
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
@@ -244,13 +244,14 @@ def webpage_transfer_time(net):
     # TODO ensure that this command spits shit out on stdout
     cmd = "curl -o <file_path> -s -w %{time_total} " + h2.IP()
     times = []
-    while True and len(times) < 3:
-        sleep(1)
-        now = time()
+    while True:
         process = h1.popen(cmd)
         process_time = process.stdout.read()
         process_time = float(process_time)
         times.append(process_time)
+        
+        sleep(1)
+        now = time()
         delta = now - start_time
         if delta > args.time:
             break
