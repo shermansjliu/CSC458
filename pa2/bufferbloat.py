@@ -17,8 +17,8 @@ from argparse import ArgumentParser
 
 from monitor import monitor_qlen
 import termcolor as T
-from datetime import datetime
 
+import time
 import sys
 import os
 import math
@@ -239,7 +239,7 @@ def webpage_transfer_time(net):
 
     '''
      # DONE TODO: measure the time it takes to complete webpage transfer
-    start_time = datetime.now()
+    start_time = time()
     h1 = net.get('h1')
     h2 = net.get('h2')
     # TODO ensure that this command spits shit out on stdout
@@ -247,7 +247,7 @@ def webpage_transfer_time(net):
     times = []
     while True and len(times) < 3:
         sleep(1)
-        now = datetime.now()
+        now = time()
         process = h1.popen(cmd)
         time = process.stdout.read()
         times.append(time)
