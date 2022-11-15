@@ -151,7 +151,7 @@ def start_ping(net):
     # until stdout is read. You can avoid this by runnning popen.communicate() or
     # redirecting stdout
     h1 = net.get('h1')
-    popen = h1.popen("echo '' > %s/ping.txt" % (args.dir), shell=True)
+    # popen = h1.popen("echo '' > %s/ping.txt" % (args.dir), shell=True)
     # i.e. ping ... > /path/to/ping.txt
     h2_ip = net.get('h2').IP()
     # DONE TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
