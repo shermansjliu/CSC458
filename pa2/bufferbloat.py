@@ -131,7 +131,7 @@ def start_iperf(net):
     h1 = net.get("h1")
 
     # DONE TODO: Start the iperf client on h1.  Ensure that you create a long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
-    client = h1.popen(f"iperf --client {h2.IP()}")
+    client = h1.popen("iperf --client {}".format(h2.IP()))
 
 
 def start_webserver(net):
@@ -156,7 +156,7 @@ def start_ping(net):
     # i.e. ping ... > /path/to/ping.txt
     h2_ip = net.get('h2').IP()
     # DONE TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
-    h1.popen(f"ping -c {h2_ip} -i 0.1 > {args.dir}/ping.txt", shell=True)
+    h1.popen("ping -c {} -i 0.1 > {}/ping.txt".format(h2_ip, args.dir), shell=True)
 
 
 def bufferbloat():
@@ -214,8 +214,8 @@ def bufferbloat():
     avg = helper.avg(times)
     
     f = open("times.txt", "w")
-    f.write(f"standard deviation: {std}")
-    f.write(f"average: {avg}")
+    f.write("standard deviation: {}".format(std))
+    f.write("average: {}".format(avg))
 
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
@@ -254,7 +254,7 @@ def webpage_transfer_time(net):
         delta = now - start_time
         if delta > args.time:
             break
-        print "%.1fs left..." % (args.time - delta)
+        print ("%.1fs left..." % (args.time - delta))
 
 if __name__ == "__main__":
     bufferbloat()
