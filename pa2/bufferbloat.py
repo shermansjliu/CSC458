@@ -83,8 +83,7 @@ class BBTopo(Topo):
         # interface names will change from s0-eth1 to newname-eth1.
         switch = self.addSwitch('s0')
 
-        h1 = hosts[1]
-        h2 = hosts[2]
+        h1, h2 = hosts
 
         h1_bw = args.bw_host
         h2_bw = args.bw_net
