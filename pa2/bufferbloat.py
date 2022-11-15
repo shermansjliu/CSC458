@@ -212,9 +212,8 @@ def bufferbloat():
     std = helper.stdev(times)
     avg = helper.avg(times)
     
-    f = open("times.txt", "w")
-    f.write("standard deviation: {}\n".format(std))
-    f.write("average: {}\n".format(avg))
+    print("standard deviation: {}\n".format(std))
+    print("average: {}\n".format(avg))
 
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
