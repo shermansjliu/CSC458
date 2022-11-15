@@ -1,7 +1,8 @@
-<html>
-<head><title>301 Moved Permanently</title></head>
-<body bgcolor="white">
-<center><h1>301 Moved Permanently</h1></center>
-<hr><center>nginx/1.14.2</center>
-</body>
-</html>
+PING google.com (172.217.1.14) 56(84) bytes of data.
+64 bytes from iad23s25-in-f14.1e100.net (172.217.1.14): icmp_seq=1 ttl=255 time=1.78 ms
+64 bytes from iad23s25-in-f14.1e100.net (172.217.1.14): icmp_seq=2 ttl=255 time=1.80 ms
+64 bytes from iad23s25-in-f14.1e100.net (172.217.1.14): icmp_seq=3 ttl=255 time=1.82 ms
+
+--- google.com ping statistics ---
+3 packets transmitted, 3 received, 0% packet loss, time 2003ms
+rtt min/avg/max/mdev = 1.785/1.806/1.825/0.038 ms
