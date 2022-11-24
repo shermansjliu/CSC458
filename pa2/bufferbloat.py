@@ -242,18 +242,20 @@ def webpage_transfer_time(net):
     cmd = "curl -o ./http/index.html -s -w %{time_total} " + h1.IP()
     times = []
     while True:
-        process = h2.popen(cmd)
-        process_time = process.stdout.read()
-        process_time = float(process_time)
-        times.append(process_time)
-        
-        sleep(1) #This can stay
+        # run the curl three times 
+        for _ in range(3):
+            process = h2.popen(cmd)
+            process_time = process.stdout.read()
+            process_time = float(process_time)
+            times.append(process_time)
+        # wait five seconds
+        sleep(5) #This can stay
         now = time()
-        delta = now - start_time
-        if delta > args.time:
+        delta = now - start_time 
+        if delta > args.time: #stop after 100s
             break
         print ("%.1fs left..." % (args.time - delta))
-    
+    assert(len(time) == 60)
     return times
 
 if __name__ == "__main__":
