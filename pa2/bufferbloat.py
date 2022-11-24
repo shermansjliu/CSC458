@@ -231,7 +231,7 @@ def webpage_transfer_time(net):
     '''
     curl -o <file_path> -s -w %{time_total} h1
 
-     Time appears on stdout
+     Time appears on stdout we want to write it to a file 
 
     '''
      # DONE TODO: measure the time it takes to complete webpage transfer
@@ -239,7 +239,7 @@ def webpage_transfer_time(net):
     h1 = net.get('h1')
     h2 = net.get('h2')
     # TODO ensure that this command spits shit out on stdout
-    cmd = "curl -o <file_path> -s -w %{time_total} " + h1.IP()
+    cmd = "curl -o ./http/index.html -s -w %{time_total} " + h1.IP()
     times = []
     while True:
         process = h2.popen(cmd)
@@ -247,7 +247,7 @@ def webpage_transfer_time(net):
         process_time = float(process_time)
         times.append(process_time)
         
-        sleep(1)
+        sleep(1) #This can stay
         now = time()
         delta = now - start_time
         if delta > args.time:
