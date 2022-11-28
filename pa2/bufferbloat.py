@@ -257,7 +257,7 @@ def webpage_transfer_time(net):
             print(process_time)
             times.append(process_time)
         # wait five seconds
-        sleep(0.2) #This can stay
+        sleep(5) #This can stay
         now = time()
         delta = now - start_time 
         if delta > args.time: #stop after 100s
