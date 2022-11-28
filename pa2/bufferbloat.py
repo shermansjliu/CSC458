@@ -152,11 +152,14 @@ def start_ping(net):
     # until stdout is read. You can avoid this by runnning popen.communicate() or
     # redirecting stdout
     h1 = net.get('h1')
-    # popen = h1.popen("echo '' > %s/ping.txt" % (args.dir), shell=True)
+    # popen = h1.popen("echo '' > %s/ping.txt"%(args.dir), shell=True)
+
+    # DONE TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
     # i.e. ping ... > /path/to/ping.txt
     h2_ip = net.get('h2').IP()
-    # DONE TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
-    h1.popen("ping -i 0.1 {} > {}/ping.txt".format(h2_ip, args.dir), shell=True)
+    print(h2_ip)
+    popen = h1.popen("ping -i .1 %s > %s/ping.txt" % (h2_ip, args.dir), shell=True)
+    # h1.popen("ping -i 0.1 {} > {}/ping.txt".format(h2_ip, args.dir), shell=True)
 
 
 def bufferbloat():
@@ -178,7 +181,7 @@ def bufferbloat():
 
     # Start all the monitoring processes
     start_tcpprobe("cwnd.txt")
-    start_ping(net)
+    start_ping(net) # TODO maybe move this below to group processes 
 
     # DONE TODO: Start monitoring the queue sizes.  Since the switch I
     # created is "s0", I monitor one of the interfaces.  Which
@@ -191,7 +194,6 @@ def bufferbloat():
 
     # DONE TODO: Start iperf, webservers, etc.
     start_iperf(net)
-    start_ping(net)
     start_webserver(net)
 
     # Hint: The command below invokes a CLI which you can use to
