@@ -255,7 +255,7 @@ def webpage_transfer_time(net):
         if delta > args.time: #stop after 100s
             break
         print ("%.1fs left..." % (args.time - delta))
-    assert(len(time) == 60)
+    assert(len(times) == 60)
     return times
 
 if __name__ == "__main__":
