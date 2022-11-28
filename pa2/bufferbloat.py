@@ -251,10 +251,11 @@ def webpage_transfer_time(net):
         for _ in range(3):
             process = h2.popen(cmd)
             process_time = process.stdout.read()
+            print(process_time)
             process_time = float(process_time)
             times.append(process_time)
         # wait five seconds
-        # sleep(5) #This can stay
+        sleep(0.2) #This can stay
         now = time()
         delta = now - start_time 
         if delta > args.time: #stop after 100s
