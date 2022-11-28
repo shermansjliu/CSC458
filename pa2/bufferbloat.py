@@ -254,7 +254,6 @@ def webpage_transfer_time(net):
             out, err = process.communicate()
             #source https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
             process_time = float(out)
-            print(process_time)
             times.append(process_time)
         # wait five seconds
         sleep(5) #This can stay
@@ -263,7 +262,8 @@ def webpage_transfer_time(net):
         if delta > args.time: #stop after 100s
             break
         print ("%.1fs left..." % (args.time - delta))
-    assert(len(times) == 60)
+    # assert(len(times) == 60)
+    print(len(times))
     return times
 
 if __name__ == "__main__":
