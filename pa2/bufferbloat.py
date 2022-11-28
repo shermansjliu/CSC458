@@ -244,7 +244,7 @@ def webpage_transfer_time(net):
     h1 = net.get('h1')
     h2 = net.get('h2')
     # TODO ensure that this command spits shit out on stdout
-    cmd = "curl -o /dev/null -s -w %%{time_total} {}/http/index.html".format(h1.IP())
+    cmd = "curl -o /dev/null -s -w %{time_total} {}/http/index.html".format(h1.IP())
     times = []
     while True:
         # run the curl three times 
