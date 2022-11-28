@@ -211,9 +211,13 @@ def bufferbloat():
     # DONE TODO: compute average (and standard deviation) of the fetch
     std = helper.stdev(times)
     avg = helper.avg(times)
-    
-    print("standard deviation: {}\n".format(std))
-    print("average: {}\n".format(avg))
+
+    f = open("time.txt", "a")
+
+    f.write("average: {}\n".format(avg))
+    f.write("standard deviation: {}".format(std))
+
+    f.close()
 
     # times.  You don't need to plot them.  Just note it in your
     # README and explain.
@@ -229,8 +233,8 @@ def bufferbloat():
 
 def webpage_transfer_time(net):
     '''
-    curl -o <file_path> -s -w %{time_total} h1
-
+    curl -o  dev/null -s -w %{time_total} <file_path> h1
+    curl -o /dev/null -s -w %{time_total} google.com
      Time appears on stdout we want to write it to a file 
 
     '''
@@ -239,7 +243,8 @@ def webpage_transfer_time(net):
     h1 = net.get('h1')
     h2 = net.get('h2')
     # TODO ensure that this command spits shit out on stdout
-    cmd = "curl -o ./http/index.html -s -w %{time_total} " + h1.IP()
+    cmd = "curl -o dev/null -s -w %%{time_total} " + h1.IP() + "/http/index.html"
+
     times = []
     while True:
         # run the curl three times 
@@ -249,7 +254,7 @@ def webpage_transfer_time(net):
             process_time = float(process_time)
             times.append(process_time)
         # wait five seconds
-        sleep(5) #This can stay
+        # sleep(5) #This can stay
         now = time()
         delta = now - start_time 
         if delta > args.time: #stop after 100s

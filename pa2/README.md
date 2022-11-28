@@ -1,3 +1,11 @@
+Queue size 20
+Average: 0.0250666666667
+Standard deviation: 0.136025716523
+
+Queue size 100
+Standard deviation: 0.211184177122
+Average 0.0581
+
 1. Why do you see a difference in webpage fetch times with small and large router buffers?
 This is because the small 
 

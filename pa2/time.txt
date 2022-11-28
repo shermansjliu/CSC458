@@ -1,10 +1,2 @@
-tandard deviation: 0.113458964051
-
-average: 0.02453125
-
-qsize:100
-standard deviation: 0.0922018356876
-
-average: 0.0340210526316
 
 
