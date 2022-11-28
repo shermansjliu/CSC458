@@ -234,7 +234,7 @@ def bufferbloat():
 
 def webpage_transfer_time(net):
     '''
-    curl -o  dev/null -s -w %{time_total} <file_path> h1
+    curl -o  /dev/null -s -w %{time_total} <file_path> h1
     curl -o /dev/null -s -w %{time_total} google.com
      Time appears on stdout we want to write it to a file 
 
@@ -244,8 +244,8 @@ def webpage_transfer_time(net):
     h1 = net.get('h1')
     h2 = net.get('h2')
     # TODO ensure that this command spits shit out on stdout
-    # cmd = "curl -o dev/null -s -w %%{time_total} " + h1.IP() + "/http/index.html"
-    cmd = "curl -o /dev/null -s -w %%{time_total} %s/http/index.html" % h1.IP()
+    cmd = "curl -o /dev/null -s -w %%{time_total} " + h1.IP() + "/http/index.html"
+    # cmd = "curl -o /dev/null -s -w %%{time_total} %s/http/index.html" % h1.IP()
     times = []
     while True:
         # run the curl three times 
