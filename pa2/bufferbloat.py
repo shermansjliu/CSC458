@@ -1,5 +1,6 @@
 #!/usr/bin/python
 "CSC458 Fall 2022 Programming Assignment 2: Bufferbloat"
+import subprocess
 
 from mininet.topo import Topo
 from mininet.node import CPULimitedHost
@@ -249,8 +250,8 @@ def webpage_transfer_time(net):
     while True:
         # run the curl three times 
         for _ in range(3):
-            process_time = h2.popen(cmd)
-
+            process = h2.popen(cmd, stdout=subprocess.PIPE)
+            process_time = process.stdout.read().strip()
             print(process_time)
             process_time = float(process_time)
             times.append(process_time)
