@@ -251,9 +251,9 @@ def webpage_transfer_time(net):
         # run the curl three times 
         for _ in range(3):
             process = h2.popen(cmd, stdout=subprocess.PIPE)
-            process_time = process.stdout.read().strip()
-            print(process_time)
-            process_time = float(process_time)
+            out, err = process.communicate()
+            #source https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
+            process_time = float(out)
             times.append(process_time)
         # wait five seconds
         sleep(0.2) #This can stay
