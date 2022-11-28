@@ -131,7 +131,7 @@ def start_iperf(net):
     h1 = net.get("h1")
 
     # DONE TODO: Start the iperf client on h1.  Ensure that you create a long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
-    client = h1.popen("iperf --client {}".format(h2.IP()))
+    h1.popen("iperf --client {} -t".format(h2.IP(), args.time))
 
 
 def start_webserver(net):
@@ -156,7 +156,7 @@ def start_ping(net):
     # i.e. ping ... > /path/to/ping.txt
     h2_ip = net.get('h2').IP()
     # DONE TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
-    h1.popen("ping -i 0.1 -w {1} {0}> {2}/ping.txt".format(h2_ip, args.time, args.dir), shell=True)
+    h1.popen("ping -i 0.1 {} > {}/ping.txt".format(h2_ip, args.dir), shell=True)
 
 
 def bufferbloat():
@@ -216,7 +216,7 @@ def bufferbloat():
     f = open("time.txt", "a")
 
     f.write("average: {}\n".format(avg))
-    f.write("standard deviation: {}".format(std))
+    f.write("standard deviation: {}\n\n".format(std))
 
     f.close()
 

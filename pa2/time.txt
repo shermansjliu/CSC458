@@ -1,5 +1,0 @@
-average: 0.2005
-standard deviation: 0.157618943917
-
-average: 0.269666666667
-standard deviation: 0.639612188466
