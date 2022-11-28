@@ -253,7 +253,8 @@ def webpage_transfer_time(net):
             process = h2.popen(cmd, stdout=subprocess.PIPE)
             out, err = process.communicate()
             #source https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
-            process_time = float(out)
+            process_time = out
+            print(process_time)
             times.append(process_time)
         # wait five seconds
         sleep(0.2) #This can stay
