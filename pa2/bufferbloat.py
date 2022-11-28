@@ -244,8 +244,7 @@ def webpage_transfer_time(net):
     h1 = net.get('h1')
     h2 = net.get('h2')
     # TODO ensure that this command spits shit out on stdout
-    cmd = "curl -o /dev/null -s -w %%{time_total} " + h1.IP() + "/http/index.html"
-    # cmd = "curl -o /dev/null -s -w %%{time_total} %s/http/index.html" % h1.IP()
+    cmd = "curl -o /dev/null -s -w %%{time_total} {}/http/index.html".format(h1.IP())
     times = []
     while True:
         # run the curl three times 
@@ -253,7 +252,7 @@ def webpage_transfer_time(net):
             process = h2.popen(cmd, stdout=subprocess.PIPE)
             out, err = process.communicate()
             #source https://stackoverflow.com/questions/2502833/store-output-of-subprocess-popen-call-in-a-string
-            process_time = out
+            process_time = float(out)
             print(process_time)
             times.append(process_time)
         # wait five seconds
