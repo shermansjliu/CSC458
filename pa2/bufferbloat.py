@@ -131,7 +131,7 @@ def start_iperf(net):
     h1 = net.get("h1")
 
     # DONE TODO: Start the iperf client on h1.  Ensure that you create a long lived TCP flow. You may need to redirect iperf's stdout to avoid blocking.
-    h1.popen("iperf -c {} -t".format(h2.IP(), str(args.time)))
+    h1.popen("iperf -c %s -t %d" % (h2.IP(), args.time))
 
 
 def start_webserver(net):
@@ -156,9 +156,8 @@ def start_ping(net):
 
     # DONE TODO: Start a ping train from h1 to h2 (or h2 to h1, does it
     # i.e. ping ... > /path/to/ping.txt
-    h2_ip = net.get('h2').IP()
-    print(h2_ip)
-    popen = h1.popen("ping -i .1 %s > %s/ping.txt" % (h2_ip, args.dir), shell=True)
+    h2 = net.get('h2')
+    popen = h1.popen("ping -i 0.1 %s > %s/ping.txt" % (h2.IP(), args.dir), shell=True)
     # h1.popen("ping -i 0.1 {} > {}/ping.txt".format(h2_ip, args.dir), shell=True)
 
 
@@ -258,7 +257,7 @@ def webpage_transfer_time(net):
             process_time = float(out)
             times.append(process_time)
         # wait five seconds
-        sleep(5) #This can stay
+        sleep(5) 
         now = time()
         delta = now - start_time 
         if delta > args.time: #stop after 100s

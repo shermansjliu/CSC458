@@ -20,7 +20,7 @@ sysctl -w net.ipv4.tcp_no_metrics_save=1
 for qsize in 20 100; do
     dir=bb-q$qsize
 
-    python bufferbloat2.py --dir=$dir --time=$time --bw-net=$bwnet --delay=$delay --maxq=$qsize
+    python bufferbloat.py --dir=$dir --time=$time --bw-net=$bwnet --delay=$delay --maxq=$qsize
 
     # TODO: Ensure the input file names match the ones you use in
     # bufferbloat.py script.  Also ensure the plot file names match
