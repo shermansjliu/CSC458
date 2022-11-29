@@ -1,18 +1,10 @@
 Q size = 20
-average: 0.2005
-standard deviation: 0.157618943917
+average: 0.656133333333
+standard deviation: 0.269651182085
 
 Q size = 100
-average: 0.269666666667
-standard deviation: 0.639612188466
-=======
-Q Size = 20
-average: 0.191166666667
-standard deviation: 0.121682152744
-
-Q Size = 100
-average: 0.306039215686
-standard deviation: 0.688378713619
+average: 1.37578787879
+standard deviation: 0.868114562946
 
 
 1. Why do you see a difference in webpage fetch times with small and large router buffers?
