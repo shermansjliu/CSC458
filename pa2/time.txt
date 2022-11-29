@@ -16,3 +16,9 @@ standard deviation: 0.20701010174
 average: 1.42675757576
 standard deviation: 0.919306030435
 
+average: 0.656133333333
+standard deviation: 0.269651182085
+
+average: 1.37578787879
+standard deviation: 0.868114562946
+
