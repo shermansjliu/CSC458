@@ -187,11 +187,11 @@ def bufferbloat():
     # Depending on the order you add links to your network, this
     # number may be 1 or 2.  Ensure you use the correct number.
     #
+    start_ping(net) # 
     qmon = start_qmon(iface='s0-eth2',
                      outfile='%s/q.txt' % (args.dir))
 
     # DONE TODO: Start iperf, webservers, etc.
-    start_ping(net) # 
     start_iperf(net)
     start_webserver(net)
 

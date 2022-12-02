@@ -29,7 +29,7 @@ For this queue size and a draining rate of 100 Mbps, what is the maximum time a 
 3. How does the RTT reported by ping vary with the queue size? Write a symbolic equation to describe the relation between the two (ignore computation overheads in ping that might affect the final result).
 
 - Let Q be queue size
-RTT ~= 2.5 * Q 
+Assuming all packets are the same size, RTT ~= 2.5 * Q 
 
 4. Identify and describe two ways to mitigate the bufferbloat problem.
 - One way is to ensure the bandwidth on the slower link greater than or equal to the router buffer or make the buffer be less than or equal to the exit rate
