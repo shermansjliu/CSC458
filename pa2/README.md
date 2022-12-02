@@ -12,16 +12,16 @@ We know that the input link's bandwidth is much larger than the downstream link.
 grow and eventually outgrow the exit rate of packets.
 Because packets are processed in FIFO, the time it takes for a packet to be dropped grows in proportion to the queue size as packets will spend more time waiting to be processed or dropped.
 
-In esscence
+In essence
 - Longer buffer => Longer queue => longer wait 
 - shorter buffer => shorter queue => shorter wait.
 
-Therefore, we see a disparity between large and small route buffers when a new tcp connection is established and packets are added to the end of the queue.
+Therefore, we see a disparity between large and small route buffers when a new TCP connection is established and packets are added to the end of the queue.
 
 2. Buffer bloat can occur in other places such as your network interface card (NIC). Check the output of ifconfig eth0 on your VirtualBox VM. What is the (maximum) transmit queue length on the network interface reported by ifconfig? 
 For this queue size and a draining rate of 100 Mbps, what is the maximum time a packet might wait in the queue before it leaves the NIC?
 
-- Maximum queue len is 1000 packets
+- Maximum queue length is 1000 packets
 - MTU of a packet is 1500 bytes
 - Drain Rate 100Mbps
 - This means that the queue can store up to 1000 * 1500 * 8 = 1.2Mbps. Draining the queue takes 1.2 / 100 = 0.012s
@@ -32,5 +32,6 @@ For this queue size and a draining rate of 100 Mbps, what is the maximum time a 
 RTT ~= 2.5 * Q 
 
 4. Identify and describe two ways to mitigate the bufferbloat problem.
-- One way is to ensure the bandwidth on the slower link greater than or equal to the buffer or the buffer to be less than or equal to the exit rate
-- Another way is to use an active queue management algorithm such as random early detection, so that the packets are dropped before the queue becomes full, which curbs the size of the congestion window and the average time packets spend inside the buffer
+- One way is to ensure the bandwidth on the slower link greater than or equal to the router buffer or make the buffer be less than or equal to the exit rate
+
+- Another way is to use an active queue management algorithm such as random early detection so that the packets are dropped before the queue becomes full, which curbs the size of the congestion window and the average time packets spend inside the buffer
