@@ -24,7 +24,7 @@ For this queue size and a draining rate of 100 Mbps, what is the maximum time a 
 - Maximum queue length is 1000 packets
 - MTU of a packet is 1500 bytes
 - Drain Rate 100Mbps
-- This means that the queue can store up to 1000 * 1500 * 8 = 1.2Mbps. Draining the queue takes 1.2 / 100 = 0.012s
+- This means that the queue can store up to 1000 * 1500 * 8 = 1.2Mbps. Draining the queue takes 1.2 / 100 = 0.12s
 
 3. How does the RTT reported by ping vary with the queue size? Write a symbolic equation to describe the relation between the two (ignore computation overheads in ping that might affect the final result).
 
@@ -32,6 +32,6 @@ For this queue size and a draining rate of 100 Mbps, what is the maximum time a 
 Assuming all packets are all 64 bytes, RTT ~= 2.5 * Q . RTT varies between 2 * Q and 2.5 * Q
 
 4. Identify and describe two ways to mitigate the bufferbloat problem.
-- One way is to ensure the bandwidth on the slower link greater than or equal to the router buffer or make the buffer be less than or equal to the exit rate
+- Keep the buffer size to a small reasonable amount
 
 - Another way is to use an active queue management algorithm such as random early detection so that the packets are dropped before the queue becomes full, which curbs the size of the congestion window and the average time packets spend inside the buffer
